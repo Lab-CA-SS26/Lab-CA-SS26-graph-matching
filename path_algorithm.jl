@@ -7,34 +7,6 @@ using FrankWolfe, Hungarian
 println("-----------------------")
 println("START")
 
-#TODO Used an llm for the following part. Need to understand and maybe adjust
-# Define the custom LMO for the Hungarian Algorithm
-struct HungarianLMO <: FrankWolfe.LinearMinimizationOracle end
-
-function FrankWolfe.compute_extreme_point(lmo::HungarianLMO, direction::Matrix{Float64}; kwargs...)
-    # Der Hungarian-Algorithmus MINIMIERT standardmäßig die Kosten.
-    # Da FrankWolfe das Skalarprodukt (direction ⋅ X) minimieren möchte,
-    # können wir die `direction`-Matrix direkt als Kostenmatrix übergeben.
-    
-    # hungarian() erwartet oft nicht-negative Werte oder verhält sich stabiler,
-    # wenn wir die Matrix verschieben. Sicherer ist es, ein Minimum abzuziehen:
-    cost_matrix = direction .- minimum(direction)
-    
-    # Berechne das optimale Assignment
-    assignment, _ = hungarian(cost_matrix)
-    
-    # Erstelle die resultierende Permutationsmatrix (als dünnbesetzte oder dichte Matrix)
-    # FrankWolfe arbeitet intern mit dichten Matrizen weiter, wenn p0 dicht ist.
-    X = zeros(Float64, size(direction))
-    for (worker, task) in enumerate(assignment)
-        if task ≠ 0  # Falls ein Assignment gefunden wurde
-            X[worker, task] = 1.0
-        end
-    end
-    
-    return X
-end
-# TODO used llm until here
 
 # TODO find out how to correctly set ϵ_λ
 ϵ_λ = 10.0
@@ -60,7 +32,7 @@ f1_minimize(P) = GraphMatchingUtils.f1(P,G,H)
 
 # Start with P as the identity matrix
 p_start = Matrix(1.0I, m_size, m_size)
-lmo = HungarianLMO()
+lmo = FrankWolfe.BirkhoffPolytopeLMO() #via Hungarian algorithm
 # find minimum of F0
 # TODO use Newton instead of FrankWolfe for initialization as stated in paper's implementation details
 p_opt, _ = frank_wolfe(f0_minimize, ∇f0_minimize!, lmo, p_start; verbose=true);
