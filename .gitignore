@@ -1,0 +1,4 @@
+*.csv
+test.jl
+*.txt
+generateRandomMatrices.jl
