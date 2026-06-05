@@ -7,9 +7,7 @@ using FrankWolfe, Hungarian
 println("-----------------------")
 println("START")
 
-
-# TODO find out how to correctly set ϵ_λ
-ϵ_λ = 10.0
+ϵ_λ = 2000.0
 
 # read matrices G and H
 m1_file = "QapLib\\Chr12c1.csv"
@@ -46,7 +44,7 @@ p_start = Matrix(1.0I, m_size, m_size)
 lmo = FrankWolfe.BirkhoffPolytopeLMO() #via Hungarian algorithm
 # find minimum of F0
 # TODO use Newton instead of FrankWolfe for initialization as stated in paper's implementation details
-p_opt, _ = frank_wolfe(f0_minimize, ∇f0_minimize!, lmo, p_start; verbose=true);
+p_opt, _ = frank_wolfe(f0_minimize, ∇f0_minimize!, lmo, p_start; verbose=false);
 display(p_opt)
 
 # dλ_min is minimum change in λ between iterations as stated in the paper
@@ -66,6 +64,7 @@ while(λ < 1.0)
     # TODO change criterion as stated in paper's implementation details. Need to understand ϵ first.
     # first d_λ is doubled until the value is larger than ϵ_λ (or new λ is larger than 1)
     while abs(f_λ(p_opt,λ_new)-f_λ(p_opt,λ)) ≤ ϵ_λ   &&   λ_new < one(Float64)
+        println("|",f_λ(p_opt,λ_new)," - ",f_λ(p_opt,λ),"| = ")
         println(abs(f_λ(p_opt,λ_new)-f_λ(p_opt,λ)), " ≤ " , ϵ_λ)
         global dλ = min(2*dλ,one(Float64))
         λ_new = λ + dλ
@@ -73,6 +72,7 @@ while(λ < 1.0)
     end
     # now d_λ is halved until the value is slightly smaller then ϵ_λ (or d_λ is smaller than minimum)
     while abs(f_λ(p_opt,λ_new)-f_λ(p_opt,λ)) > ϵ_λ && dλ > dλ_min
+        println("|",f_λ(p_opt,λ_new)," - ",f_λ(p_opt,λ),"| = ")
         println(abs(f_λ(p_opt,λ_new)-f_λ(p_opt,λ)), " > " , ϵ_λ)
         global dλ = max(dλ/2,dλ_min)
         λ_new = λ + dλ

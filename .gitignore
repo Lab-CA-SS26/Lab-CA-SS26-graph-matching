@@ -1,4 +1,4 @@
 *.csv
-test.jl
+test.*
 *.txt
 generateRandomMatrices.jl
