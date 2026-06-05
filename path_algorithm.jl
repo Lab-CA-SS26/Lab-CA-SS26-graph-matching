@@ -67,19 +67,19 @@ while(λ < 1.0)
     # first d_λ is doubled until the value is larger than ϵ_λ (or new λ is larger than 1)
     while abs(f_λ(p_opt,λ_new)-f_λ(p_opt,λ)) ≤ ϵ_λ   &&   λ_new < one(Float64)
         println(abs(f_λ(p_opt,λ_new)-f_λ(p_opt,λ)), " ≤ " , ϵ_λ)
-        dλ = min(2*dλ,one(Float64))
+        global dλ = min(2*dλ,one(Float64))
         λ_new = λ + dλ
         println("dλ = ", dλ)
     end
     # now d_λ is halved until the value is slightly smaller then ϵ_λ (or d_λ is smaller than minimum)
     while abs(f_λ(p_opt,λ_new)-f_λ(p_opt,λ)) > ϵ_λ && dλ > dλ_min
         println(abs(f_λ(p_opt,λ_new)-f_λ(p_opt,λ)), " > " , ϵ_λ)
-        dλ = max(dλ/2,dλ_min)
+        global dλ = max(dλ/2,dλ_min)
         λ_new = λ + dλ
         println("dλ = ", dλ)
     end
     println("λ: ",λ," → ",λ_new)
-    λ = λ_new
+    global λ = λ_new
     # criterion is met, λ is set correctly
 
     # set λ as constant and define F_λ and it's gradient only over P
