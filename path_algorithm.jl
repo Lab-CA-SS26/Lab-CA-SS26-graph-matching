@@ -6,6 +6,7 @@ using CSV, DelimitedFiles, LinearAlgebra, Permutations
 using FrankWolfe
 
 function main()
+    # read input and configurations from config.toml (input example given in config.template.toml)
     config = TOML.parsefile("config.toml")
     m1_file = config["dataInput"]["matrix1_filePath"]
     m2_file = config["dataInput"]["matrix2_filePath"]
@@ -36,12 +37,13 @@ function main()
     println("H:")
     display(H)
 
-    # calculate F0 and F1 and there gradients dependent only on P as G and H are constant matrices
+    # define F0 and F1 and their gradients dependent only on P as G and H are constant matrices from here on
     f0_minimize(P) = GraphMatchingUtils.f0(P,G,H)
     ∇f0_minimize!(storage, P) = GraphMatchingUtils.∇f0!(storage, P, G, H)
-    storage0 = Matrix{Float64}(undef, m_size, m_size)
     f1_minimize(P) = GraphMatchingUtils.f1(P,G,H)
     ∇f1_minimize!(storage, P) = GraphMatchingUtils.∇f1!(storage, P, G, H)
+    # allocate fixed space for the gradient matrices so that they don't allocate new space for each calculation
+    storage0 = Matrix{Float64}(undef, m_size, m_size)
     storage1 = Matrix{Float64}(undef, m_size, m_size)
 
     # Start with P as the identity matrix
@@ -50,16 +52,16 @@ function main()
     # find minimum of F0
     # TODO use Newton instead of FrankWolfe for initialization as stated in paper's implementation details
     global p_opt, _ = frank_wolfe(f0_minimize, ∇f0_minimize!, lmo, p_start; verbose=print_FrankWolfe);
-    display(p_opt)
+    display(p_opt)  # P after first call of FW on F0
 
-    # dλ_min is minimum change in λ between iterations as stated in the paper
+    # dλ_min is minimum possible change in λ between iterations as stated in the paper
     global dλ_min = 1.0e-05
     # change in λ is dynamically adjusted; starts at minimum
     global dλ = dλ_min
-    # begin with λ=0 and iteratively increase up until 1
+    # begin with λ=0; iteratively increase up until 1
     global λ = 0
-    # Fλ is linear combination of F0 and F1 dependent on λ starting at F0
-    f_λ(P, λ) = (1-λ) * GraphMatchingUtils.f0(P, G, H)  +  λ * GraphMatchingUtils.f1(P, G, H)
+    # Fλ is linear combination of F0 & F1 dependent on λ starting at F0
+    fλ(P, λ) = (1-λ) * GraphMatchingUtils.f0(P, G, H)  +  λ * GraphMatchingUtils.f1(P, G, H)
 
     while(λ < 1.0)
         # set first possible value for λ_new and find best one in the following part
@@ -68,17 +70,17 @@ function main()
         # update dλ until criterion is met
         # TODO change criterion as stated in paper's implementation details. Need to understand ϵ first.
         # first d_λ is doubled until the value is larger than ϵ_λ (or new λ is larger than 1)
-        while abs(f_λ(p_opt,λ_new)-f_λ(p_opt,λ)) ≤ ϵ_λ   &&   λ_new < one(Float64)
-            println("|",f_λ(p_opt,λ_new)," - ",f_λ(p_opt,λ),"| = ")
-            println(abs(f_λ(p_opt,λ_new)-f_λ(p_opt,λ)), " ≤ " , ϵ_λ)
+        while abs(fλ(p_opt,λ_new)-fλ(p_opt,λ)) ≤ ϵ_λ   &&   λ_new < one(Float64)
+            # println("|",fλ(p_opt,λ_new)," - ",fλ(p_opt,λ),"| = ")
+            println(abs(fλ(p_opt,λ_new)-fλ(p_opt,λ)), " ≤ " , ϵ_λ)
             global dλ = min(2*dλ,one(Float64))
             λ_new = λ + dλ
             println("dλ = ", dλ)
         end
-        # now d_λ is halved until the value is slightly smaller then ϵ_λ (or d_λ is smaller than minimum)
-        while abs(f_λ(p_opt,λ_new)-f_λ(p_opt,λ)) > ϵ_λ && dλ > dλ_min
-            println("|",f_λ(p_opt,λ_new)," - ",f_λ(p_opt,λ),"| = ")
-            println(abs(f_λ(p_opt,λ_new)-f_λ(p_opt,λ)), " > " , ϵ_λ)
+        # now d_λ is halved until the value is slightly smaller then ϵ_λ (or dλ is smaller than minimum)
+        while abs(fλ(p_opt,λ_new)-fλ(p_opt,λ)) > ϵ_λ && dλ > dλ_min
+            # println("|",fλ(p_opt,λ_new)," - ",fλ(p_opt,λ),"| = ")
+            println(abs(fλ(p_opt,λ_new)-fλ(p_opt,λ)), " > " , ϵ_λ)
             global dλ = max(dλ/2,dλ_min)
             λ_new = λ + dλ
             println("dλ = ", dλ)
@@ -88,13 +90,13 @@ function main()
         # criterion is met, λ is set correctly
 
         # set λ as constant and define F_λ and it's gradient only over P
-        f_λ_minimize(P) = f_λ(P, λ)
-        ∇f_λ_minimize!(storageλ, P) = GraphMatchingUtils.∇f_λ!(storageλ, storage0, storage1, P, λ, G, H)
+        fλ_minimize(P) = fλ(P, λ)
+        ∇fλ_minimize!(storageλ, P) = GraphMatchingUtils.∇fλ!(storageλ, storage0, storage1, P, λ, G, H)
 
         # use FrankWolfe Algorithm with adjusted Fλ function
         # starting at the current doubly stochastic matrix and save solution as new minimum
         local p_temp = p_opt
-        global p_opt, _ = frank_wolfe(f_λ_minimize, ∇f_λ_minimize!, lmo, p_temp; verbose=print_FrankWolfe);
+        global p_opt, _ = frank_wolfe(fλ_minimize, ∇fλ_minimize!, lmo, p_temp; verbose=print_FrankWolfe);
         # stop immediately if FrankWolfe arrives at a Permutationmatrix as this is a feasible minimum
         if GraphMatchingUtils.isPerm(p_opt)
             println("DONE")

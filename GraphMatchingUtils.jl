@@ -1,6 +1,6 @@
 module GraphMatchingUtils
     using LinearAlgebra
-    export isPerm, sqd_frob, f0, ∇f0!, f1, ∇f1!, ∇f_λ!, qapVal
+    export isPerm, sqd_frob, f0, ∇f0!, f1, ∇f1!, ∇fλ!, qapVal
 
    # permute matrix A by permutation matrix p
    # A is matrix
@@ -82,7 +82,7 @@ module GraphMatchingUtils
 
    # gradient of F1 as stated in the paper
    # save solution value in variable "storage" for space economy
-   function ∇f_λ!(storageλ, storage0, storage1, P, λ, G, H)
+   function ∇fλ!(storageλ, storage0, storage1, P, λ, G, H)
     GraphMatchingUtils.∇f0!(storage0, P, G, H)
     GraphMatchingUtils.∇f1!(storage1, P, G, H)
     storageλ .= (1.0-λ) .* storage0 .+ λ .* storage1
