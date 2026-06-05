@@ -1,20 +1,23 @@
 using Revise
 includet("GraphMatchingUtils.jl")
 using .GraphMatchingUtils
+using TOML
 using CSV, DelimitedFiles, SparseArrays, LinearAlgebra, Permutations
 using FrankWolfe, Hungarian
 
 function main()
+    config = TOML.parsefile("config.toml")
+    m1_file = config["dataInput"]["matrix1_filePath"]
+    m2_file = config["dataInput"]["matrix2_filePath"]
+    ϵ_λ = config["dataInput"]["epsilon_lambda"]
+    print_FrankWolfe = config["printing"]["print_FrankWolfe"]
+
     println("-----------------------")
     println("START")
 
-    ϵ_λ = 2000.0
-
     # read matrices G and H
-    m1_file = "QapLib\\Chr12c1.csv"
-    m2_file = "QapLib\\Chr12c2.csv"
-    G = readdlm(m1_file, Int)
-    H = readdlm(m2_file, Int)
+    G = readdlm(m1_file)
+    H = readdlm(m2_file)
 
     # if graphs have different sizes extend the smaller one by zero rows and columns
     diffSize = size(G,1)-size(H,1)
@@ -26,6 +29,7 @@ function main()
         diffSize = abs(diffSize)
         G = cat(G,zeros(diffSize,diffSize); dims=(1,2))
     end
+    m_size = size(G,1)
 
     println("G:")
     display(G)
