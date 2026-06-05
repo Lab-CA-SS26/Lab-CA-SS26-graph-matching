@@ -45,21 +45,21 @@ function main()
     lmo = FrankWolfe.BirkhoffPolytopeLMO() #via Hungarian algorithm
     # find minimum of F0
     # TODO use Newton instead of FrankWolfe for initialization as stated in paper's implementation details
-    p_opt, _ = frank_wolfe(f0_minimize, ∇f0_minimize!, lmo, p_start; verbose=false);
+    global p_opt, _ = frank_wolfe(f0_minimize, ∇f0_minimize!, lmo, p_start; verbose=print_FrankWolfe);
     display(p_opt)
 
     # dλ_min is minimum change in λ between iterations as stated in the paper
-    dλ_min = 1.0e-05
+    global dλ_min = 1.0e-05
     # change in λ is dynamically adjusted; starts at minimum
-    dλ = dλ_min
+    global dλ = dλ_min
     # begin with λ=0 and iteratively increase up until 1
-    λ = 0
+    global λ = 0
     # Fλ is linear combination of F0 and F1 dependent on λ starting at F0
     f_λ(P, λ) = (1-λ) * GraphMatchingUtils.f0(P, G, H)  +  λ * GraphMatchingUtils.f1(P, G, H)
 
     while(λ < 1.0)
         # set first possible value for λ_new and find best one in the following part
-        λ_new = λ + dλ
+        local λ_new = λ + dλ
 
         # update dλ until criterion is met
         # TODO change criterion as stated in paper's implementation details. Need to understand ϵ first.
@@ -89,8 +89,8 @@ function main()
 
         # use FrankWolfe Algorithm with adjusted Fλ function
         # starting at the current doubly stochastic matrix and save solution as new minimum
-        p_temp = p_opt
-        global p_opt, _ = frank_wolfe(f_λ_minimize, ∇f_λ_minimize!, lmo, p_temp; verbose=false);
+        local p_temp = p_opt
+        global p_opt, _ = frank_wolfe(f_λ_minimize, ∇f_λ_minimize!, lmo, p_temp; verbose=print_FrankWolfe);
         # stop immediately if FrankWolfe arrives at a Permutationmatrix as this is a feasible minimum
         if GraphMatchingUtils.isPerm(p_opt)
             println("DONE")
