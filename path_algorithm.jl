@@ -12,13 +12,22 @@ println("START")
 ϵ_λ = 10.0
 
 # read matrices G and H
-m1_file = "matrix1.csv"
-m2_file = "matrix2.csv"
-# TODO find out matrix_size automatically
-# TODO if G and H have different sizes deal with that
-m_size = 25
-G = readdlm(m1_file, ' ', Float64)
-H = readdlm(m2_file, ' ', Float64)
+m1_file = "QapLib\\Chr12c1.csv"
+m2_file = "QapLib\\Chr12c2.csv"
+G = readdlm(m1_file, Int)
+H = readdlm(m2_file, Int)
+
+# if graphs have different sizes extend the smaller one by zero rows and columns
+diffSize = size(G,1)-size(H,1)
+if diffSize > 0
+    # G is greater
+    H = cat(H,zeros(diffSize,diffSize); dims=(1,2))
+elseif diffSize < 0
+    # H is greater
+    diffSize = abs(diffSize)
+    G = cat(G,zeros(diffSize,diffSize); dims=(1,2))
+end
+
 println("G:")
 display(G)
 println("H:")
