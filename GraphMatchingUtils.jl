@@ -1,6 +1,6 @@
 module GraphMatchingUtils
     using LinearAlgebra
-    export permutate, isPerm, sqd_frob, f0, ∇f0!, f1, ∇f1!, ∇f_λ!
+    export isPerm, sqd_frob, f0, ∇f0!, f1, ∇f1!, ∇f_λ!, qapVal
 
    # permute matrix A by permutation matrix p
    # A is matrix
@@ -87,4 +87,8 @@ module GraphMatchingUtils
     GraphMatchingUtils.∇f1!(storage1, P, G, H)
     storageλ .= (1.0-λ) .* storage0 .+ λ .* storage1
    end
+
+   function qapVal(P,G,H)
+    return tr(P'*H'*P*G)
+   end 
 end

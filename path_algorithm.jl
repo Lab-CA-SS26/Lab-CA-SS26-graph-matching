@@ -1,7 +1,7 @@
 using Revise
 includet("GraphMatchingUtils.jl")
 using .GraphMatchingUtils
-using CSV, DelimitedFiles, SparseArrays, LinearAlgebra
+using CSV, DelimitedFiles, SparseArrays, LinearAlgebra, Permutations
 using FrankWolfe, Hungarian
 
 println("-----------------------")
@@ -89,14 +89,18 @@ while(λ < 1.0)
     # use FrankWolfe Algorithm with adjusted Fλ function
     # starting at the current doubly stochastic matrix and save solution as new minimum
     p_temp = p_opt
-    global p_opt, _ = frank_wolfe(f_λ_minimize, ∇f_λ_minimize!, lmo, p_temp; verbose=true);
-    println("P:")
-    display(p_opt)
+    global p_opt, _ = frank_wolfe(f_λ_minimize, ∇f_λ_minimize!, lmo, p_temp; verbose=false);
     # stop immediately if FrankWolfe arrives at a Permutationmatrix as this is a feasible minimum
     if GraphMatchingUtils.isPerm(p_opt)
         println("DONE")
+        println("P:")
+        display(two_row(Permutation(p_opt)))
+        println("Inv(P)")
+        display(two_row(inv(Permutation(p_opt))))
         break
     else
+        # println("P:")
+        # display(p_opt)
         println("CONTINUE")
     end
 end
@@ -104,5 +108,12 @@ println("Cost at start:")
 println(GraphMatchingUtils.f0(p_start, G, H))
 println("Cost at end:")
 println(GraphMatchingUtils.f0(p_opt, G, H))
+println("Value of QAP")
+println(GraphMatchingUtils.qapVal(p_opt, G, H))
+println("Optimum for QAP")
+p_opt = [7,5,1,3,10,4,8,6,9,11,2,12]
+println(p_opt)
+p_opt = Matrix(Permutation(p_opt))
+println(GraphMatchingUtils.qapVal(p_opt, G, H))
 println("END")
 println("-----------------------")
