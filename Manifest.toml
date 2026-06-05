@@ -2,7 +2,7 @@
 
 julia_version = "1.12.6"
 manifest_format = "2.0"
-project_hash = "c81e34eb692e660be388a3947e327b1dc7885492"
+project_hash = "fcbc0099f5af7c8988a236b6ab1bd968167560a4"
 
 [[deps.Arpack]]
 deps = ["Arpack_jll", "Libdl", "LinearAlgebra", "Logging"]
@@ -262,12 +262,6 @@ version = "0.10.12"
 deps = ["StyledStrings"]
 uuid = "ac6e5ff7-fb65-4e79-a425-ec3bc9c03011"
 version = "1.12.0"
-
-[[deps.LabGraphMatching]]
-deps = ["CSV", "DelimitedFiles", "FrankWolfe", "Hungarian", "LinearAlgebra", "Permutations", "Revise", "TOML"]
-path = "."
-uuid = "556a0210-cb54-430a-8041-38e6d7206121"
-version = "0.1.0"
 
 [[deps.LibGit2]]
 deps = ["LibGit2_jll", "NetworkOptions", "Printf", "SHA"]

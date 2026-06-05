@@ -2,8 +2,8 @@ using Revise
 includet("GraphMatchingUtils.jl")
 using .GraphMatchingUtils
 using TOML
-using CSV, DelimitedFiles, SparseArrays, LinearAlgebra, Permutations
-using FrankWolfe, Hungarian
+using CSV, DelimitedFiles, LinearAlgebra, Permutations
+using FrankWolfe
 
 function main()
     config = TOML.parsefile("config.toml")
