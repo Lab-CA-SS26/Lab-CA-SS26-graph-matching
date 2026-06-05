@@ -47,7 +47,7 @@ module GraphMatchingUtils
             Δ_G_H[i, j] = D_H[j, j] - D_G[i, i]
         end
     end
-    return Δ_G_H
+    return Δ_G_H.^2
    end
 
    # returns the laplacian matrix of G
@@ -69,7 +69,7 @@ module GraphMatchingUtils
    # function F1 as stated in the paper
    function f1(P, G, H)
     # TODO more efficient computation of F1? Kronecker product seems too big (n^2 × n^2)
-    k = kron(laplacian(G)',laplacian(H)')
+    k = kron(laplacian(H)',laplacian(G)')
     temp = vec(P)' * k * vec(P)
     return -tr(Δ(G,H)*P) - 2.0 * temp
    end
