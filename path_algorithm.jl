@@ -36,8 +36,10 @@ display(H)
 # calculate F0 and F1 and there gradients dependent only on P as G and H are constant matrices
 f0_minimize(P) = GraphMatchingUtils.f0(P,G,H)
 ∇f0_minimize!(storage, P) = GraphMatchingUtils.∇f0!(storage, P, G, H)
+storage0 = Matrix{Float64}(undef, m_size, m_size)
 f1_minimize(P) = GraphMatchingUtils.f1(P,G,H)
 ∇f1_minimize!(storage, P) = GraphMatchingUtils.∇f1!(storage, P, G, H)
+storage1 = Matrix{Float64}(undef, m_size, m_size)
 
 # Start with P as the identity matrix
 p_start = Matrix(1.0I, m_size, m_size)
@@ -82,7 +84,7 @@ while(λ < 1.0)
 
     # set λ as constant and define F_λ and it's gradient only over P
     f_λ_minimize(P) = f_λ(P, λ)
-    ∇f_λ_minimize!(storage, P) = GraphMatchingUtils.∇f_λ!(storage, P, λ, G, H)
+    ∇f_λ_minimize!(storageλ, P) = GraphMatchingUtils.∇f_λ!(storageλ, storage0, storage1, P, λ, G, H)
 
     # use FrankWolfe Algorithm with adjusted Fλ function
     # starting at the current doubly stochastic matrix and save solution as new minimum

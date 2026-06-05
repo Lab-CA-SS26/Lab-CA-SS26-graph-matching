@@ -82,10 +82,9 @@ module GraphMatchingUtils
 
    # gradient of F1 as stated in the paper
    # save solution value in variable "storage" for space economy
-   # TODO Is this the correct way to calculate F_λ's gradient?
-   function ∇f_λ!(storage, P, λ, G, H)
-    g0 = GraphMatchingUtils.∇f0!(storage, P, G, H)
-    g1 = GraphMatchingUtils.∇f1!(storage, P, G, H)
-    storage .= (1.0-λ) .* g0 .+ λ .* g1
+   function ∇f_λ!(storageλ, storage0, storage1, P, λ, G, H)
+    GraphMatchingUtils.∇f0!(storage0, P, G, H)
+    GraphMatchingUtils.∇f1!(storage1, P, G, H)
+    storageλ .= (1.0-λ) .* storage0 .+ λ .* storage1
    end
 end
