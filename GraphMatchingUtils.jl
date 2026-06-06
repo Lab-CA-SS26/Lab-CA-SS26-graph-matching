@@ -68,7 +68,7 @@ module GraphMatchingUtils
 
    # function F1 as stated in the paper
    function f1(P, G, H)
-    return -tr(Δ(G,H)*P) - 2.0 * (vec(P)' * vec(laplacian(G) * P * laplacian(H)))
+    return -tr(Δ(G,H)'*P) - 2.0 * (vec(P)' * vec(laplacian(G) * P * laplacian(H)))
    end
 
    # gradient of F1 as stated in the paper
