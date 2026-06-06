@@ -63,7 +63,7 @@ module GraphMatchingUtils
    # gradient of F0 as stated in the paper
    # save solution value in variable "storage" for space economy
    function ∇f0!(storage, P, G, H)
-       storage .= 2.0 .* (G * G * P .- G' * P * H' .- G * P * H .+ P * H * H)
+       storage .= 2.0 .* ((G^2) * P .- 2.0 .* G * P * H .+ P * (H^2))
    end
 
    # function F1 as stated in the paper
