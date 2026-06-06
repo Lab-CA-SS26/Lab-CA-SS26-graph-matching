@@ -111,12 +111,19 @@ function main()
             println("CONTINUE")
         end
     end
+
+    constantTerm = tr(GraphMatchingUtils.laplacian(G)^2)+tr(GraphMatchingUtils.laplacian(H)^2)
     println("Cost at start:")
     println(GraphMatchingUtils.f0(p_start, G, H))
+    println(GraphMatchingUtils.f1(p_start, G, H)," + ",constantTerm," =")
+    println(GraphMatchingUtils.f1(p_start, G, H) + constantTerm)
     println("Cost at end:")
     println(GraphMatchingUtils.f0(p_opt, G, H))
+    println(GraphMatchingUtils.f1(p_opt, G, H)," + ",constantTerm," =")
+    println(GraphMatchingUtils.f1(p_opt, G, H) + constantTerm)
     println("Value of QAP")
     println(GraphMatchingUtils.qapVal(p_opt, G, H))
+    println(GraphMatchingUtils.qapVal(p_opt, H, G))
     println("Optimum for QAP")
     p_opt = [7,5,1,3,10,4,8,6,9,11,2,12]
     println(p_opt)

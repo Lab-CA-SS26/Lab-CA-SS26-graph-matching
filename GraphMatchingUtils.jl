@@ -47,17 +47,17 @@ module GraphMatchingUtils
             Δ_G_H[i, j] = D_H[j, j] - D_G[i, i]
         end
     end
-    return Δ_G_H.^2
+    return Δ_G_H .^ 2
    end
 
    # returns the laplacian matrix of G
    function laplacian(G)
-    return diagonal_degree(G) - G
+    return diagonal_degree(G) .- G
    end
 
    # function F0 as stated in the paper
    function f0(P,G,H)
-    return sqd_frob(G-P*H*P')
+    return sqd_frob(G*P .- P*H)
    end
 
    # gradient of F0 as stated in the paper
