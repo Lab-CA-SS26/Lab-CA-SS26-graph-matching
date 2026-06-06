@@ -68,11 +68,8 @@ module GraphMatchingUtils
 
    # function F1 as stated in the paper
    function f1(P, G, H)
-    # TODO more efficient computation of F1? Kronecker product seems too big (n^2 × n^2)
-    k = kron(laplacian(H)',laplacian(G)')
-    temp = vec(P)' * k * vec(P)
     constantTerm = tr(laplacian(G)^2)+tr(laplacian(H)^2)
-    return -tr(Δ(G,H)*P) - 2.0 * temp + constantTerm
+    return -tr(Δ(G,H)*P) - 2.0 * (vec(P)' * vec(laplacian(G)' * P * laplacian(H))) + constantTerm
    end
 
    # gradient of F1 as stated in the paper
