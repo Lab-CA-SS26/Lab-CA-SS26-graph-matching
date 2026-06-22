@@ -2,7 +2,7 @@ using Revise
 includet("GraphMatchingUtils.jl")
 using .GraphMatchingUtils
 using TOML
-using CSV, DelimitedFiles, LinearAlgebra, Permutations
+using DataFrames, CSV, DelimitedFiles, LinearAlgebra, Permutations
 using FrankWolfe
 
 function main()
@@ -154,6 +154,10 @@ function main()
             println("CONTINUE")
         end
     end
+
+    df_history = DataFrame(history)
+    CSV.write("frank_wolfe_history.csv", df_history)
+    println("History saved")
 
     constantTerm = tr(GraphMatchingUtils.laplacian(G)^2)+tr(GraphMatchingUtils.laplacian(H)^2)
     println("Cost at start:")
