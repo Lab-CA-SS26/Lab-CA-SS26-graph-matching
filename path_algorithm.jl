@@ -10,7 +10,8 @@ function main()
     config = TOML.parsefile("config.toml")
     m1_file = config["dataInput"]["matrix1_filePath"]
     m2_file = config["dataInput"]["matrix2_filePath"]
-    ϵ_λ = config["dataInput"]["epsilon_lambda"]
+    ϵ_λ_f = config["dataInput"]["epsilon_lambda_f"]
+    ϵ_λ_p = config["dataInput"]["epsilon_lambda_p"]
     print_FrankWolfe = config["printing"]["print_FrankWolfe"]
 
     println("-----------------------")
@@ -103,25 +104,61 @@ function main()
         # set first possible value for λ_new and find best one in the following part
         local λ_new = λ + dλ
 
+
+        # calculate local optimum for λ_new
+        fλ_new_minimize(P) = fλ(P, λ_new)
+        ∇fλ_new_minimize!(storageλ_new, P) = GraphMatchingUtils.∇fλ!(storageλ_new, storage0, storage1, P, λ_new, G, H)
+        p_new, _ = frank_wolfe(
+            fλ_new_minimize, ∇fλ_new_minimize!, lmo, p_opt; 
+            epsilon = 1e-8,
+            max_iteration = 10_000,
+            callback = callback,
+            verbose=print_FrankWolfe
+        )
+
         # update dλ until criterion is met
-        # TODO change criterion as stated in paper's implementation details. Need to understand ϵ first.
+        # TODO implemented new stopping criterion. Need to still find out ϵ_f and ϵ_p values from FrankWolfe implementation and calculate ϵ_λ_f and ϵ_λ_p with added input M.
+        # Is ϵ_λ_f just epsilon from the input?
         # first d_λ is doubled until the value is larger than ϵ_λ (or new λ is larger than 1)
-        while abs(fλ(p_opt,λ_new)-fλ(p_opt,λ)) ≤ ϵ_λ   &&   λ_new < one(Float64)
+        while abs(fλ(p_new,λ_new)-fλ(p_opt,λ)) < ϵ_λ_f   &&   norm(p_new - p_opt) < ϵ_λ_p   &&   λ_new < one(Float64)
             # println("|",fλ(p_opt,λ_new)," - ",fλ(p_opt,λ),"| = ")
-            println(abs(fλ(p_opt,λ_new)-fλ(p_opt,λ)), " ≤ " , ϵ_λ)
+            println(abs(fλ(p_new,λ_new)-fλ(p_opt,λ)), " < " , ϵ_λ_f, " AND ")
+            println(norm(p_new - p_opt), " < " , ϵ_λ_p)
             global dλ = min(2*dλ,one(Float64))
             λ_new = λ + dλ
             println("dλ = ", dλ)
+
+            fλ_new_minimize(P) = fλ(P, λ_new)
+            ∇fλ_new_minimize!(storageλ_new, P) = GraphMatchingUtils.∇fλ!(storageλ_new, storage0, storage1, P, λ_new, G, H)
+            p_new, _ = frank_wolfe(
+                fλ_new_minimize, ∇fλ_new_minimize!, lmo, p_opt; 
+                epsilon = 1e-8,
+                max_iteration = 10_000,
+                callback = callback,
+                verbose = print_FrankWolfe
+            )
         end
+
         # now d_λ is halved until the value is slightly smaller then ϵ_λ (or dλ is smaller than minimum)
-        while abs(fλ(p_opt,λ_new)-fλ(p_opt,λ)) > ϵ_λ && dλ > dλ_min
+        while (abs(fλ(p_new,λ_new)-fλ(p_opt,λ)) > ϵ_λ_f   ||   norm(p_new - p_opt) > ϵ_λ_p)   &&   dλ > dλ_min
             # println("|",fλ(p_opt,λ_new)," - ",fλ(p_opt,λ),"| = ")
-            println(abs(fλ(p_opt,λ_new)-fλ(p_opt,λ)), " > " , ϵ_λ)
+            println(abs(fλ(p_new,λ_new)-fλ(p_opt,λ)), " > " , ϵ_λ_f, " OR ")
+            println(norm(p_new - p_opt), " > " , ϵ_λ_p)
             global dλ = max(dλ/2,dλ_min)
             λ_new = λ + dλ
             println("dλ = ", dλ)
+
+            fλ_new_minimize(P) = fλ(P, λ_new)
+            ∇fλ_new_minimize!(storageλ_new, P) = GraphMatchingUtils.∇fλ!(storageλ_new, storage0, storage1, P, λ_new, G, H)
+            p_new, _ = frank_wolfe(
+                fλ_new_minimize, ∇fλ_new_minimize!, lmo, p_opt; 
+                epsilon = 1e-8,
+                max_iteration = 10_000,
+                callback = callback,
+                verbose = print_FrankWolfe
+            )
         end
-        println("λ: ",λ," → ",λ_new)
+        println("λ: ",λ," + ",dλ," = ",λ_new)
         global λ = λ_new
         # criterion is met, λ is set correctly
 
@@ -137,7 +174,7 @@ function main()
             epsilon = 1e-8,
             max_iteration = 10_000,
             callback = callback,
-            verbose=print_FrankWolfe
+            verbose = print_FrankWolfe
         )
 
         # stop immediately if FrankWolfe arrives at a Permutationmatrix as this is a feasible minimum
@@ -155,11 +192,7 @@ function main()
         end
     end
 
-    df_history = DataFrame(history)
-    CSV.write("frank_wolfe_history.csv", df_history)
-    println("History saved")
-
-    constantTerm = tr(GraphMatchingUtils.laplacian(G)^2)+tr(GraphMatchingUtils.laplacian(H)^2)
+    #constantTerm = tr(GraphMatchingUtils.laplacian(G)^2)+tr(GraphMatchingUtils.laplacian(H)^2)
     println("Cost at start:")
     println(GraphMatchingUtils.f0(p_start, G, H))
     println(GraphMatchingUtils.f1(p_start, G, H))
@@ -178,6 +211,11 @@ function main()
     println(p_opt)
     p_opt = Matrix(Permutation(p_opt))
     println(GraphMatchingUtils.qapVal(p_opt, G, H))
+
+    df_history = DataFrame(history)
+    CSV.write("frank_wolfe_history.csv", df_history)
+    println("History saved")
+
     println("END")
     println("-----------------------")
 end

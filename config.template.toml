@@ -1,7 +1,8 @@
 [dataInput]
 matrix1_filePath = "QapLib\\Chr12c1.csv"
 matrix2_filePath = "QapLib\\Chr12c2.csv"
-epsilon_lambda = 2000.0
+epsilon_lambda_f = 10000
+epsilon_lambda_p = 0.1
 
 [printing]
 print_FrankWolfe = true
