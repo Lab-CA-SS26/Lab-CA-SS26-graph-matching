@@ -60,18 +60,25 @@ function main()
         f_current = state.primal
         x_current = state.x
 
-        f_decrement =
+        f_change =
             prev_f[] === nothing ? NaN : abs(f_current - prev_f[])
 
         x_change =
             prev_x[] === nothing ? NaN : norm(x_current - prev_x[])
+
+        if state.t == 1
+            f_change_sum = 0
+        else
+            f_change_sum = history[end].f_change_sum + f_change
+        end
 
         push!(history, (
             iter = state.t,
             primal = state.primal,
             dual = state.dual,
             dual_gap = state.dual_gap,
-            f_decrement = f_decrement,
+            f_change = f_change,
+            f_change_sum = f_change_sum,
             x_change = x_change,
             gamma = state.gamma,
         ))
@@ -115,11 +122,12 @@ function main()
             callback = callback,
             verbose=print_FrankWolfe
         )
+        #println(abs(fλ(p_new,λ_new)-fλ(p_opt,λ_new))," = ",history[end].f_change_sum," ?")
 
         # update dλ until criterion is met
         # TODO implemented new stopping criterion. Need to still find out ϵ_f and ϵ_p values from FrankWolfe implementation and calculate ϵ_λ_f and ϵ_λ_p with added input M.
         # Is ϵ_λ_f just epsilon from the input?
-        # first d_λ is doubled until the value is larger than ϵ_λ (or new λ is larger than 1)
+        # first d_λ is doubled until one value is larger than it's threshold (or new λ is larger than 1)
         while abs(fλ(p_new,λ_new)-fλ(p_opt,λ)) < ϵ_λ_f   &&   norm(p_new - p_opt) < ϵ_λ_p   &&   λ_new < one(Float64)
             # println("|",fλ(p_opt,λ_new)," - ",fλ(p_opt,λ),"| = ")
             println(abs(fλ(p_new,λ_new)-fλ(p_opt,λ)), " < " , ϵ_λ_f, " AND ")
@@ -137,9 +145,10 @@ function main()
                 callback = callback,
                 verbose = print_FrankWolfe
             )
+            #println(abs(fλ(p_new,λ_new)-fλ(p_opt,λ_new))," = ",history[end].f_change_sum," ?")
         end
 
-        # now d_λ is halved until the value is slightly smaller then ϵ_λ (or dλ is smaller than minimum)
+        # now d_λ is halved until both values are smaller than their thresholds (or dλ is smaller than minimum)
         while (abs(fλ(p_new,λ_new)-fλ(p_opt,λ)) > ϵ_λ_f   ||   norm(p_new - p_opt) > ϵ_λ_p)   &&   dλ > dλ_min
             # println("|",fλ(p_opt,λ_new)," - ",fλ(p_opt,λ),"| = ")
             println(abs(fλ(p_new,λ_new)-fλ(p_opt,λ)), " > " , ϵ_λ_f, " OR ")
@@ -157,6 +166,7 @@ function main()
                 callback = callback,
                 verbose = print_FrankWolfe
             )
+            #println(abs(fλ(p_new,λ_new)-fλ(p_opt,λ_new))," = ",history[end].f_change_sum," ?")
         end
         println("λ: ",λ," + ",dλ," = ",λ_new)
         global λ = λ_new
