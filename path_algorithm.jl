@@ -8,8 +8,9 @@ using FrankWolfe
 function main()
     # read input and configurations from config.toml (input example given in config.template.toml)
     config = TOML.parsefile("config.toml")
-    m1_file = config["dataInput"]["matrix1_filePath"]
-    m2_file = config["dataInput"]["matrix2_filePath"]
+    qapLib_example = config["dataInput"]["qapLib_example"]
+    m1_file = "QapLib/$(qapLib_example)1.csv"
+    m2_file = "QapLib/$(qapLib_example)2.csv"
     ϵ_λ_f = config["dataInput"]["epsilon_lambda_f"]
     ϵ_λ_p = config["dataInput"]["epsilon_lambda_p"]
     print_FrankWolfe = config["printing"]["print_FrankWolfe"]
@@ -202,22 +203,18 @@ function main()
         end
     end
 
-    #constantTerm = tr(GraphMatchingUtils.laplacian(G)^2)+tr(GraphMatchingUtils.laplacian(H)^2)
     println("Cost at start:")
-    println(GraphMatchingUtils.f0(p_start, G, H))
-    println(GraphMatchingUtils.f1(p_start, G, H))
-    #println(GraphMatchingUtils.f1(p_start, G, H)," + ",constantTerm," =")
-    #println(GraphMatchingUtils.f1(p_start, G, H) + constantTerm)
+    println("F0: ", GraphMatchingUtils.f0(p_start, G, H))
+    println("F1: ", GraphMatchingUtils.f1(p_start, G, H))
     println("Cost at end:")
-    println(GraphMatchingUtils.f0(p_opt, G, H))
-    println(GraphMatchingUtils.f1(p_opt, G, H))
-    #println(GraphMatchingUtils.f1(p_opt, G, H)," + ",constantTerm," =")
-    #println(GraphMatchingUtils.f1(p_opt, G, H) + constantTerm)
+    println("F0: ", GraphMatchingUtils.f0(p_opt, G, H))
+    println("F1: ", GraphMatchingUtils.f1(p_opt, G, H))
     println("Value of QAP")
-    println(GraphMatchingUtils.qapVal(p_opt, G, H))
-    println(GraphMatchingUtils.qapVal(p_opt, H, G))
-    println("Optimum for QAP")
-    p_opt = [7,5,1,3,10,4,8,6,9,11,2,12]
+    println("G -> H: ", GraphMatchingUtils.qapVal(p_opt, G, H))
+    println("H -> G: ", GraphMatchingUtils.qapVal(p_opt, H, G))
+    println("Optimum of ",qapLib_example,": ")
+    p_opt = readdlm("QapLib/$(qapLib_example)Opt.csv", Int64)
+    p_opt = vec(p_opt)
     println(p_opt)
     p_opt = Matrix(Permutation(p_opt))
     println(GraphMatchingUtils.qapVal(p_opt, G, H))

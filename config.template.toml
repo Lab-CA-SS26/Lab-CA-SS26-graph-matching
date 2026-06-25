@@ -1,6 +1,5 @@
 [dataInput]
-matrix1_filePath = "QapLib\\Chr12c1.csv"
-matrix2_filePath = "QapLib\\Chr12c2.csv"
+qapLib_example = "Chr12c"
 epsilon_lambda_f = 100000
 epsilon_lambda_p = 1
 
