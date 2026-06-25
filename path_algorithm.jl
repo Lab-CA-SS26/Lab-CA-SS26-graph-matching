@@ -17,11 +17,11 @@ function main()
 
     println("-----------------------")
     println("START")
-
+    
     # read matrices G and H
     G = readdlm(m1_file)
     H = readdlm(m2_file)
-
+    
     # if graphs have different sizes extend the smaller one by zero rows and columns
     diffSize = size(G,1)-size(H,1)
     if diffSize > 0
@@ -33,12 +33,12 @@ function main()
         G = cat(G,zeros(diffSize,diffSize); dims=(1,2))
     end
     m_size = size(G,1)
-
+    
     println("G:")
     display(G)
     println("H:")
     display(H)
-
+    
     println("Start timer")
     t1 = time()
     
@@ -66,15 +66,12 @@ function main()
 
         f_change =
             prev_f[] === nothing ? NaN : abs(f_current - prev_f[])
-
+        decrease =
+            prev_f[] === nothing ? NaN : (prev_f[] - f_current > 0)
+        f_change_sum =
+            state.t === 1 ? 0 : history[end].f_change_sum + f_change
         x_change =
             prev_x[] === nothing ? NaN : norm(x_current - prev_x[])
-
-        if state.t == 1
-            f_change_sum = 0
-        else
-            f_change_sum = history[end].f_change_sum + f_change
-        end
 
         push!(history, (
             iter = state.t,
@@ -82,6 +79,7 @@ function main()
             dual = state.dual,
             dual_gap = state.dual_gap,
             f_change = f_change,
+            decrease = decrease,
             f_change_sum = f_change_sum,
             x_change = x_change,
             gamma = state.gamma,
