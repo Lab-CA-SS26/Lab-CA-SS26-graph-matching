@@ -1,6 +1,7 @@
 module GraphMatchingUtils
     using LinearAlgebra
-    export isPerm, sqd_frob, f0, ∇f0!, f1, ∇f1!, ∇fλ!, qapVal
+    export isPerm, sqd_frob, f0, ∇f0!, f1, ∇f1!, fλ, ∇fλ!, qapVal
+    export FλForP, ∇FλForP!
 
    # permute matrix A by permutation matrix p
    # A is matrix
@@ -78,6 +79,20 @@ module GraphMatchingUtils
     storage .= -Δ(G,H)' .- 2.0 .* laplacian(G) * P * laplacian(H)
    end
 
+   function fλ(P, λ, G, H)
+    return (1-λ) * GraphMatchingUtils.f0(P, G, H)  +  λ * GraphMatchingUtils.f1(P, G, H)
+   end
+
+    struct FλForP
+        λ::Float64
+        G::Matrix{Float64}
+        H::Matrix{Float64}
+    end
+    function(fλ_struct::FλForP)(P) 
+        return fλ(P, fλ_struct.λ, fλ_struct.G, fλ_struct.H)
+    end
+
+
    # gradient of F1 as stated in the paper
    # save solution value in variable "storage" for space economy
    function ∇fλ!(storageλ, storage0, storage1, P, λ, G, H)
@@ -85,6 +100,16 @@ module GraphMatchingUtils
     GraphMatchingUtils.∇f1!(storage1, P, G, H)
     storageλ .= (1.0-λ) .* storage0 .+ λ .* storage1
    end
+   struct ∇FλForP!
+        storage0::Matrix{Float64}
+        storage1::Matrix{Float64}
+        λ::Float64
+        G::Matrix{Float64}
+        H::Matrix{Float64}
+    end
+    function(∇fλ_struct::∇FλForP!)(storageλ, P)
+        ∇fλ!(storageλ, ∇fλ_struct.storage0, ∇fλ_struct.storage1, P, ∇fλ_struct.λ, ∇fλ_struct.G, ∇fλ_struct.H)
+    end
 
    function qapVal(P,G,H)
     return tr(P'*H'*P*G)

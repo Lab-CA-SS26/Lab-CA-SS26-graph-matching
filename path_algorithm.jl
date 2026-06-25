@@ -106,8 +106,7 @@ function main()
     global dλ = dλ_min
     # begin with λ=0; iteratively increase up until 1
     global λ = 0
-    # Fλ is linear combination of F0 & F1 dependent on λ starting at F0
-    fλ(P, λ) = (1-λ) * GraphMatchingUtils.f0(P, G, H)  +  λ * GraphMatchingUtils.f1(P, G, H)
+    
 
     while(λ < 1.0)
         # set first possible value for λ_new and find best one in the following part
@@ -115,10 +114,10 @@ function main()
 
 
         # calculate local optimum for λ_new
-        fλ_new_minimize(P) = fλ(P, λ_new)
-        ∇fλ_new_minimize!(storageλ_new, P) = GraphMatchingUtils.∇fλ!(storageλ_new, storage0, storage1, P, λ_new, G, H)
+        fλ_new_minimize = FλForP(λ_new, G, H)
+        ∇fλ_new_minimize = ∇FλForP!(storage0, storage1, λ_new, G, H)
         p_new, _ = frank_wolfe(
-            fλ_new_minimize, ∇fλ_new_minimize!, lmo, p_opt; 
+            fλ_new_minimize, ∇fλ_new_minimize, lmo, p_opt; 
             epsilon = 1e-8,
             max_iteration = 10_000,
             callback = callback,
@@ -130,18 +129,18 @@ function main()
         # TODO implemented new stopping criterion. Need to still find out ϵ_f and ϵ_p values from FrankWolfe implementation and calculate ϵ_λ_f and ϵ_λ_p with added input M.
         # Is ϵ_λ_f just epsilon from the input?
         # first d_λ is doubled until one value is larger than it's threshold (or new λ is larger than 1)
-        while abs(fλ(p_new,λ_new)-fλ(p_opt,λ)) < ϵ_λ_f   &&   norm(p_new - p_opt) < ϵ_λ_p   &&   λ_new < one(Float64)
+        while abs(fλ(p_new,λ_new,G,H)-fλ(p_opt,λ,G,H)) < ϵ_λ_f   &&   norm(p_new - p_opt) < ϵ_λ_p   &&   λ_new < one(Float64)
             # println("|",fλ(p_opt,λ_new)," - ",fλ(p_opt,λ),"| = ")
-            println(abs(fλ(p_new,λ_new)-fλ(p_opt,λ)), " < " , ϵ_λ_f, " AND ")
+            println(abs(fλ(p_new,λ_new,G,H)-fλ(p_opt,λ,G,H)), " < " , ϵ_λ_f, " AND ")
             println(norm(p_new - p_opt), " < " , ϵ_λ_p)
             global dλ = min(2*dλ,one(Float64))
             λ_new = λ + dλ
             println("dλ = ", dλ)
 
-            fλ_new_minimize(P) = fλ(P, λ_new)
-            ∇fλ_new_minimize!(storageλ_new, P) = GraphMatchingUtils.∇fλ!(storageλ_new, storage0, storage1, P, λ_new, G, H)
+            fλ_new_minimize = FλForP(λ_new, G, H)
+            ∇fλ_new_minimize = ∇FλForP!(storage0, storage1, λ_new, G, H)
             p_new, _ = frank_wolfe(
-                fλ_new_minimize, ∇fλ_new_minimize!, lmo, p_opt; 
+                fλ_new_minimize, ∇fλ_new_minimize, lmo, p_opt; 
                 epsilon = 1e-8,
                 max_iteration = 10_000,
                 callback = callback,
@@ -151,18 +150,18 @@ function main()
         end
 
         # now d_λ is halved until both values are smaller than their thresholds (or dλ is smaller than minimum)
-        while (abs(fλ(p_new,λ_new)-fλ(p_opt,λ)) > ϵ_λ_f   ||   norm(p_new - p_opt) > ϵ_λ_p)   &&   dλ > dλ_min
+        while (abs(fλ(p_new,λ_new,G,H)-fλ(p_opt,λ,G,H)) > ϵ_λ_f   ||   norm(p_new - p_opt) > ϵ_λ_p)   &&   dλ > dλ_min
             # println("|",fλ(p_opt,λ_new)," - ",fλ(p_opt,λ),"| = ")
-            println(abs(fλ(p_new,λ_new)-fλ(p_opt,λ)), " > " , ϵ_λ_f, " OR ")
+            println(abs(fλ(p_new,λ_new,G,H)-fλ(p_opt,λ,G,H)), " > " , ϵ_λ_f, " OR ")
             println(norm(p_new - p_opt), " > " , ϵ_λ_p)
             global dλ = max(dλ/2,dλ_min)
             λ_new = λ + dλ
             println("dλ = ", dλ)
 
-            fλ_new_minimize(P) = fλ(P, λ_new)
-            ∇fλ_new_minimize!(storageλ_new, P) = GraphMatchingUtils.∇fλ!(storageλ_new, storage0, storage1, P, λ_new, G, H)
+            fλ_new_minimize = FλForP(λ_new, G, H)
+            ∇fλ_new_minimize = ∇FλForP!(storage0, storage1, λ_new, G, H)
             p_new, _ = frank_wolfe(
-                fλ_new_minimize, ∇fλ_new_minimize!, lmo, p_opt; 
+                fλ_new_minimize, ∇fλ_new_minimize, lmo, p_opt; 
                 epsilon = 1e-8,
                 max_iteration = 10_000,
                 callback = callback,
@@ -175,14 +174,14 @@ function main()
         # criterion is met, λ is set correctly
 
         # set λ as constant and define F_λ and it's gradient only over P
-        fλ_minimize(P) = fλ(P, λ)
-        ∇fλ_minimize!(storageλ, P) = GraphMatchingUtils.∇fλ!(storageλ, storage0, storage1, P, λ, G, H)
+        fλ_minimize = FλForP(λ, G, H)
+        ∇fλ_minimize = ∇FλForP!(storage0, storage1, λ, G, H)
 
         # use FrankWolfe Algorithm with adjusted Fλ function
         # starting at the current doubly stochastic matrix and save solution as new minimum
         local p_temp = p_opt
         global p_opt, _ = frank_wolfe(
-            fλ_minimize, ∇fλ_minimize!, lmo, p_temp; 
+            fλ_minimize, ∇fλ_minimize, lmo, p_temp; 
             epsilon = 1e-8,
             max_iteration = 10_000,
             callback = callback,
