@@ -39,6 +39,9 @@ function main()
     println("H:")
     display(H)
 
+    println("Start timer")
+    t1 = time()
+    
     # define F0 and F1 and their gradients dependent only on P as G and H are constant matrices from here on
     f0_minimize(P) = GraphMatchingUtils.f0(P,G,H)
     ∇f0_minimize!(storage, P) = GraphMatchingUtils.∇f0!(storage, P, G, H)
@@ -202,6 +205,8 @@ function main()
             println("CONTINUE")
         end
     end
+    elapsed_time = time() - t1
+    println("Elapsed time: ", elapsed_time, " seconds")
 
     println("Cost at start:")
     println("F0: ", GraphMatchingUtils.f0(p_start, G, H))
