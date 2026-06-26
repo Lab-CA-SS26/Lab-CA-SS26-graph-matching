@@ -219,7 +219,7 @@ function main()
     p_opt = vec(p_opt)
     p_opt = Matrix(Permutation(p_opt))
     display(two_row(Permutation(p_opt)))
-    println(GraphMatchingUtils.qapVal(p_opt, G, H))
+    println(GraphMatchingUtils.qapVal(p_opt, H, G))
 
     df_history = DataFrame(history)
     CSV.write("frank_wolfe_history.csv", df_history)

@@ -112,6 +112,6 @@ module GraphMatchingUtils
     end
 
    function qapVal(P,G,H)
-    return tr(P'*H'*P*G)
+    return tr(G*P*H'*P')
    end 
 end
