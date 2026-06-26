@@ -1,7 +1,7 @@
 module GraphMatchingUtils
     using LinearAlgebra
-    export isPerm, sqd_frob, f0, ∇f0!, f1, ∇f1!, fλ, ∇fλ!, qapVal
-    export FλForP, ∇FλForP!
+    export isPerm, sqd_frob, f0, ∇f0!, f1, ∇f1!, fλ, fλ_QAP, ∇fλ!, ∇fλ_QAP!, qapVal
+    export FλForP, ∇FλForP!, FλForP_QAP, ∇FλForP_QAP!
 
    # permute matrix A by permutation matrix p
    # A is matrix
@@ -92,6 +92,19 @@ module GraphMatchingUtils
         return fλ(P, fλ_struct.λ, fλ_struct.G, fλ_struct.H)
     end
 
+    # function flipped for maximization and solving QAP
+   function fλ_QAP(P, λ, G, H)
+    return (1-λ) * (-GraphMatchingUtils.f1(P, G, H))  +  λ * (-GraphMatchingUtils.f0(P, G, H))
+   end
+
+    struct FλForP_QAP
+        λ::Float64
+        G::Matrix{Float64}
+        H::Matrix{Float64}
+    end
+    function(fλ_struct::FλForP_QAP)(P) 
+        return fλ_QAP(P, fλ_struct.λ, fλ_struct.G, fλ_struct.H)
+    end
 
    # gradient of F1 as stated in the paper
    # save solution value in variable "storage" for space economy
@@ -100,6 +113,7 @@ module GraphMatchingUtils
     GraphMatchingUtils.∇f1!(storage1, P, G, H)
     storageλ .= (1.0-λ) .* storage0 .+ λ .* storage1
    end
+
    struct ∇FλForP!
         storage0::Matrix{Float64}
         storage1::Matrix{Float64}
@@ -109,6 +123,25 @@ module GraphMatchingUtils
     end
     function(∇fλ_struct::∇FλForP!)(storageλ, P)
         ∇fλ!(storageλ, ∇fλ_struct.storage0, ∇fλ_struct.storage1, P, ∇fλ_struct.λ, ∇fλ_struct.G, ∇fλ_struct.H)
+    end
+
+   # gradient flipped for maximization and solving QAP
+   # save solution value in variable "storage" for space economy
+   function ∇fλ_QAP!(storageλ, storage0, storage1, P, λ, G, H)
+    GraphMatchingUtils.∇f0!(storage0, P, G, H)
+    GraphMatchingUtils.∇f1!(storage1, P, G, H)
+    storageλ .= (1.0-λ) .* (-storage1) .+ λ .* (-storage0)
+   end
+
+   struct ∇FλForP_QAP!
+        storage0::Matrix{Float64}
+        storage1::Matrix{Float64}
+        λ::Float64
+        G::Matrix{Float64}
+        H::Matrix{Float64}
+    end
+    function(∇fλ_struct::∇FλForP_QAP!)(storageλ, P)
+        ∇fλ_QAP!(storageλ, ∇fλ_struct.storage0, ∇fλ_struct.storage1, P, ∇fλ_struct.λ, ∇fλ_struct.G, ∇fλ_struct.H)
     end
 
    function qapVal(P,G,H)

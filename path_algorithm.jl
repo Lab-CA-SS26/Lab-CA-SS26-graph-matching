@@ -8,6 +8,7 @@ using FrankWolfe
 function main()
     # read input and configurations from config.toml (input example given in config.template.toml)
     config = TOML.parsefile("config.toml")
+    solveQAP = config["dataInput"]["solveQAP"]
     qapLib_example = config["dataInput"]["qapLib_example"]
     m1_file = "QapLib/$(qapLib_example)1.csv"
     m2_file = "QapLib/$(qapLib_example)2.csv"
@@ -91,14 +92,23 @@ function main()
         return true
     end
 
-    # find minimum of F0
+    # find minimum of F0 (F1 for QAP)
     # TODO use Newton instead of FrankWolfe for initialization as stated in paper's implementation details
-    global p_opt, _ = FrankWolfe.frank_wolfe(
-    f0_minimize, ∇f0_minimize!, lmo, p_start;
-    epsilon = 1e-8,
-    max_iteration = 10_000,
-    callback = callback,
-    )
+    if !solveQAP
+        global p_opt, _ = FrankWolfe.frank_wolfe(
+        f0_minimize, ∇f0_minimize!, lmo, p_start;
+        epsilon = 1e-8,
+        max_iteration = 10_000,
+        callback = callback,
+        )
+    else
+        global p_opt, _ = FrankWolfe.frank_wolfe(
+        f1_minimize, ∇f1_minimize!, lmo, p_start;
+        epsilon = 1e-8,
+        max_iteration = 10_000,
+        callback = callback,
+        )
+    end
 
     # dλ_min is minimum possible change in λ between iterations as stated in the paper
     global dλ_min = 1.0e-05
@@ -114,8 +124,13 @@ function main()
 
 
         # calculate local optimum for λ_new
-        fλ_new_minimize = FλForP(λ_new, G, H)
-        ∇fλ_new_minimize = ∇FλForP!(storage0, storage1, λ_new, G, H)
+        if !solveQAP
+            fλ_new_minimize = FλForP(λ_new, G, H)
+            ∇fλ_new_minimize = ∇FλForP!(storage0, storage1, λ_new, G, H)
+        else
+            fλ_new_minimize = FλForP_QAP(λ_new, G, H)
+            ∇fλ_new_minimize = ∇FλForP_QAP!(storage0, storage1, λ_new, G, H)
+        end
         p_new, _ = frank_wolfe(
             fλ_new_minimize, ∇fλ_new_minimize, lmo, p_opt; 
             epsilon = 1e-8,
@@ -128,7 +143,7 @@ function main()
         # update dλ until criterion is met
         # TODO implemented new stopping criterion. Need to still find out ϵ_f and ϵ_p values from FrankWolfe implementation and calculate ϵ_λ_f and ϵ_λ_p with added input M.
         # Is ϵ_λ_f just epsilon from the input?
-        # first d_λ is doubled until one value is larger than it's threshold (or new λ is larger than 1)
+        # d_λ is doubled until one value is larger than it's threshold (or new λ is larger than 1)
         while abs(fλ(p_new,λ_new,G,H)-fλ(p_opt,λ,G,H)) < ϵ_λ_f   &&   norm(p_new - p_opt) < ϵ_λ_p   &&   λ_new < one(Float64)
             # println("|",fλ(p_opt,λ_new)," - ",fλ(p_opt,λ),"| = ")
             println(abs(fλ(p_new,λ_new,G,H)-fλ(p_opt,λ,G,H)), " < " , ϵ_λ_f, " AND ")
@@ -137,8 +152,13 @@ function main()
             λ_new = λ + dλ
             println("dλ = ", dλ)
 
-            fλ_new_minimize = FλForP(λ_new, G, H)
-            ∇fλ_new_minimize = ∇FλForP!(storage0, storage1, λ_new, G, H)
+            if !solveQAP
+                fλ_new_minimize = FλForP(λ_new, G, H)
+                ∇fλ_new_minimize = ∇FλForP!(storage0, storage1, λ_new, G, H)
+            else
+                fλ_new_minimize = FλForP_QAP(λ_new, G, H)
+                ∇fλ_new_minimize = ∇FλForP_QAP!(storage0, storage1, λ_new, G, H)
+            end
             p_new, _ = frank_wolfe(
                 fλ_new_minimize, ∇fλ_new_minimize, lmo, p_opt; 
                 epsilon = 1e-8,
@@ -149,7 +169,7 @@ function main()
             #println(abs(fλ(p_new,λ_new)-fλ(p_opt,λ_new))," = ",history[end].f_change_sum," ?")
         end
 
-        # now d_λ is halved until both values are smaller than their thresholds (or dλ is smaller than minimum)
+        # d_λ is halved until both values are smaller than their thresholds (or dλ is smaller than minimum)
         while (abs(fλ(p_new,λ_new,G,H)-fλ(p_opt,λ,G,H)) > ϵ_λ_f   ||   norm(p_new - p_opt) > ϵ_λ_p)   &&   dλ > dλ_min
             # println("|",fλ(p_opt,λ_new)," - ",fλ(p_opt,λ),"| = ")
             println(abs(fλ(p_new,λ_new,G,H)-fλ(p_opt,λ,G,H)), " > " , ϵ_λ_f, " OR ")
@@ -158,8 +178,13 @@ function main()
             λ_new = λ + dλ
             println("dλ = ", dλ)
 
-            fλ_new_minimize = FλForP(λ_new, G, H)
-            ∇fλ_new_minimize = ∇FλForP!(storage0, storage1, λ_new, G, H)
+            if !solveQAP
+                fλ_new_minimize = FλForP(λ_new, G, H)
+                ∇fλ_new_minimize = ∇FλForP!(storage0, storage1, λ_new, G, H)
+            else
+                fλ_new_minimize = FλForP_QAP(λ_new, G, H)
+                ∇fλ_new_minimize = ∇FλForP_QAP!(storage0, storage1, λ_new, G, H)
+            end
             p_new, _ = frank_wolfe(
                 fλ_new_minimize, ∇fλ_new_minimize, lmo, p_opt; 
                 epsilon = 1e-8,
@@ -174,8 +199,13 @@ function main()
         # criterion is met, λ is set correctly
 
         # set λ as constant and define F_λ and it's gradient only over P
-        fλ_minimize = FλForP(λ, G, H)
-        ∇fλ_minimize = ∇FλForP!(storage0, storage1, λ, G, H)
+        if !solveQAP
+            fλ_minimize = FλForP(λ, G, H)
+            ∇fλ_minimize = ∇FλForP!(storage0, storage1, λ, G, H)
+        else
+            fλ_minimize = FλForP_QAP(λ, G, H)
+            ∇fλ_minimize = ∇FλForP_QAP!(storage0, storage1, λ, G, H)
+        end
 
         # use FrankWolfe Algorithm with adjusted Fλ function
         # starting at the current doubly stochastic matrix and save solution as new minimum
@@ -205,6 +235,7 @@ function main()
     elapsed_time = time() - t1
     println("Elapsed time: ", elapsed_time, " seconds")
 
+    println("Solving QAP: ", solveQAP)
     println("Cost at start:")
     println("F0: ", GraphMatchingUtils.f0(p_start, G, H))
     println("F1: ", GraphMatchingUtils.f1(p_start, G, H))

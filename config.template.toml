@@ -1,4 +1,5 @@
 [dataInput]
+solveQAP = true
 qapLib_example = "Chr12c"
 epsilon_lambda_f = 100000
 epsilon_lambda_p = 1
