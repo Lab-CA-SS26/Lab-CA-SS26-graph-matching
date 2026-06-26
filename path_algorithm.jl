@@ -8,7 +8,7 @@ using FrankWolfe
 function main()
     # read input and configurations from config.toml (input example given in config.template.toml)
     config = TOML.parsefile("config.toml")
-    solveQAP = config["dataInput"]["solveQAP"]
+    solveQAP = config["dataInput"]["solveQAP"]  #if true, the QAP is solved instead of the graph matching problem
     qapLib_example = config["dataInput"]["qapLib_example"]
     m1_file = "QapLib/$(qapLib_example)1.csv"
     m2_file = "QapLib/$(qapLib_example)2.csv"
