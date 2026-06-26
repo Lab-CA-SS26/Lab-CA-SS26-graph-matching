@@ -58,7 +58,8 @@ module GraphMatchingUtils
 
    # function F0 as stated in the paper
    function f0(P,G,H)
-    return sqd_frob(G*P .- P*H)
+    value = sqd_frob(G*P .- P*H)
+    return value / (sqd_frob(G) + sqd_frob(H))
    end
 
    # gradient of F0 as stated in the paper
@@ -70,7 +71,8 @@ module GraphMatchingUtils
    # function F1 as stated in the paper
    function f1(P, G, H)
     constantTerm = tr(GraphMatchingUtils.laplacian(G)^2)+tr(GraphMatchingUtils.laplacian(H)^2)
-    return -tr(Δ(G,H)'*P) - 2.0 * (vec(P)' * vec(laplacian(G) * P * laplacian(H))) + constantTerm
+    value = -tr(Δ(G,H)'*P) - 2.0 * (vec(P)' * vec(laplacian(G) * P * laplacian(H))) + constantTerm
+    return value / (sqd_frob(G) + sqd_frob(H))
    end
 
    # gradient of F1 as stated in the paper
