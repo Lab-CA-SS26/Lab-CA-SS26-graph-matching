@@ -140,6 +140,8 @@ function main()
         )
         #println(abs(fλ(p_new,λ_new)-fλ(p_opt,λ_new))," = ",history[end].f_change_sum," ?")
 
+        p_last::Union{Nothing, Matrix{Float64}} = nothing
+
         # update dλ until criterion is met
         # TODO implemented new stopping criterion. Need to still find out ϵ_f and ϵ_p values from FrankWolfe implementation and calculate ϵ_λ_f and ϵ_λ_p with added input M.
         # Is ϵ_λ_f just epsilon from the input?
@@ -159,6 +161,7 @@ function main()
                 fλ_new_minimize = FλForP_QAP(λ_new, G, H)
                 ∇fλ_new_minimize = ∇FλForP_QAP!(storage0, storage1, λ_new, G, H)
             end
+            p_last = p_new
             p_new, _ = frank_wolfe(
                 fλ_new_minimize, ∇fλ_new_minimize, lmo, p_opt; 
                 epsilon = 1e-8,
@@ -167,6 +170,29 @@ function main()
                 verbose = print_FrankWolfe
             )
             #println(abs(fλ(p_new,λ_new)-fλ(p_opt,λ_new))," = ",history[end].f_change_sum," ?")
+        end
+        
+        # if the last while loop's condition is not met (anymore), dλ is too large and can be halved at least once
+        global dλ = max(dλ/2,dλ_min)
+        λ_new = λ + dλ
+        println("dλ = ", dλ)
+        if !isnothing(p_last)
+            p_new = p_last
+        else
+            if !solveQAP
+                fλ_new_minimize = FλForP(λ_new, G, H)
+                ∇fλ_new_minimize = ∇FλForP!(storage0, storage1, λ_new, G, H)
+            else
+                fλ_new_minimize = FλForP_QAP(λ_new, G, H)
+                ∇fλ_new_minimize = ∇FλForP_QAP!(storage0, storage1, λ_new, G, H)
+            end
+            p_new, _ = frank_wolfe(
+                fλ_new_minimize, ∇fλ_new_minimize, lmo, p_opt; 
+                epsilon = 1e-8,
+                max_iteration = 10_000,
+                callback = callback,
+                verbose = print_FrankWolfe
+            )
         end
 
         # d_λ is halved until both values are smaller than their thresholds (or dλ is smaller than minimum)
