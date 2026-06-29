@@ -148,8 +148,7 @@ function main()
         # d_λ is doubled until one value is larger than it's threshold (or new λ is larger than 1)
         while abs(fλ(p_new,λ_new,G,H)-fλ(p_opt,λ,G,H)) < ϵ_λ_f   &&   norm(p_new - p_opt) < ϵ_λ_p   &&   λ_new < one(Float64)
             # println("|",fλ(p_opt,λ_new)," - ",fλ(p_opt,λ),"| = ")
-            println(abs(fλ(p_new,λ_new,G,H)-fλ(p_opt,λ,G,H)), " < " , ϵ_λ_f, " AND ")
-            println(norm(p_new - p_opt), " < " , ϵ_λ_p)
+            println(abs(fλ(p_new,λ_new,G,H)-fλ(p_opt,λ,G,H)), " < " , ϵ_λ_f, " AND ", norm(p_new - p_opt), " < " , ϵ_λ_p)
             global dλ = min(2*dλ,one(Float64))
             λ_new = λ + dλ
             println("dλ = ", dλ)
@@ -171,6 +170,8 @@ function main()
             )
             #println(abs(fλ(p_new,λ_new)-fλ(p_opt,λ_new))," = ",history[end].f_change_sum," ?")
         end
+        println("END LOOP 1")
+        println(abs(fλ(p_new,λ_new,G,H)-fλ(p_opt,λ,G,H)), " > " , ϵ_λ_f, " OR ", norm(p_new - p_opt), " > " , ϵ_λ_p)
         
         # if the last while loop's condition is not met (anymore), dλ is too large and can be halved at least once
         global dλ = max(dλ/2,dλ_min)
@@ -194,12 +195,12 @@ function main()
                 verbose = print_FrankWolfe
             )
         end
+        println("BETWEEN")
 
         # d_λ is halved until both values are smaller than their thresholds (or dλ is smaller than minimum)
         while (abs(fλ(p_new,λ_new,G,H)-fλ(p_opt,λ,G,H)) > ϵ_λ_f   ||   norm(p_new - p_opt) > ϵ_λ_p)   &&   dλ > dλ_min
             # println("|",fλ(p_opt,λ_new)," - ",fλ(p_opt,λ),"| = ")
-            println(abs(fλ(p_new,λ_new,G,H)-fλ(p_opt,λ,G,H)), " > " , ϵ_λ_f, " OR ")
-            println(norm(p_new - p_opt), " > " , ϵ_λ_p)
+            println(abs(fλ(p_new,λ_new,G,H)-fλ(p_opt,λ,G,H)), " > " , ϵ_λ_f, " OR ", norm(p_new - p_opt), " > " , ϵ_λ_p)
             global dλ = max(dλ/2,dλ_min)
             λ_new = λ + dλ
             println("dλ = ", dλ)
@@ -220,6 +221,8 @@ function main()
             )
             #println(abs(fλ(p_new,λ_new)-fλ(p_opt,λ_new))," = ",history[end].f_change_sum," ?")
         end
+        println("END LOOP 2")
+        println(abs(fλ(p_new,λ_new,G,H)-fλ(p_opt,λ,G,H)), " < " , ϵ_λ_f, " AND ", norm(p_new - p_opt), " < " , ϵ_λ_p)
         println("λ: ",λ," + ",dλ," = ",λ_new)
         global λ = λ_new
         # criterion is met, λ is set correctly
