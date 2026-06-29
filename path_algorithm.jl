@@ -224,6 +224,7 @@ function main()
         global λ = λ_new
         # criterion is met, λ is set correctly
 
+        #= not needed with new stopping criterions because FrankWolfe is already called in the while loops above
         # set λ as constant and define F_λ and it's gradient only over P
         if !solveQAP
             fλ_minimize = FλForP(λ, G, H)
@@ -243,7 +244,9 @@ function main()
             callback = callback,
             verbose = print_FrankWolfe
         )
+        =#
 
+        p_opt = p_new
         # stop immediately if FrankWolfe arrives at a Permutationmatrix as this is a feasible minimum
         if GraphMatchingUtils.isPerm(p_opt)
             println("DONE")
