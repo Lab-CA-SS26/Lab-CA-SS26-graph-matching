@@ -291,7 +291,7 @@ uuid = "b964fa9f-0449-5b57-a5c2-d3ea65f4040f"
 version = "1.4.0"
 
 [[deps.Lab-CA-SS26-graph-matching]]
-deps = ["CSV", "DelimitedFiles", "FrankWolfe", "LinearAlgebra", "Permutations", "Revise", "TOML"]
+deps = ["CSV", "DataFrames", "DelimitedFiles", "FrankWolfe", "LinearAlgebra", "Permutations", "Revise", "TOML"]
 path = "."
 uuid = "556a0210-cb54-430a-8041-38e6d7206121"
 version = "0.1.0"
