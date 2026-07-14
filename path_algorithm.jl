@@ -117,8 +117,9 @@ function main()
     # begin with λ=0; iteratively increase up until 1
     global λ = 0
     
-
+    count_iter = 0
     while(λ < 1.0)
+        count_iter += 1
         # set first possible value for λ_new and find best one in the following part
         local λ_new = λ + dλ
 
