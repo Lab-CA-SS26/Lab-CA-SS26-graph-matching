@@ -140,6 +140,7 @@ function main()
             verbose=print_FrankWolfe
         )
         #println(abs(fλ(p_new,λ_new)-fλ(p_opt,λ_new))," = ",history[end].f_change_sum," ?")
+        p_change_normed = norm(p_new - p_opt) / sqrt(2 * m_size)
 
         p_last::Union{Nothing, Matrix{Float64}} = nothing
 
@@ -147,9 +148,9 @@ function main()
         # TODO implemented new stopping criterion. Need to still find out ϵ_f and ϵ_p values from FrankWolfe implementation and calculate ϵ_λ_f and ϵ_λ_p with added input M.
         # Is ϵ_λ_f just epsilon from the input?
         # d_λ is doubled until one value is larger than it's threshold (or new λ is larger than 1)
-        while abs(fλ(p_new,λ_new,G,H)-fλ(p_opt,λ,G,H)) < ϵ_λ_f   &&   norm(p_new - p_opt) < ϵ_λ_p   &&   λ_new < one(Float64)
+        while abs(fλ(p_new,λ_new,G,H)-fλ(p_opt,λ,G,H)) < ϵ_λ_f   &&   p_change_normed < ϵ_λ_p   &&   λ_new < one(Float64)
             # println("|",fλ(p_opt,λ_new)," - ",fλ(p_opt,λ),"| = ")
-            println(abs(fλ(p_new,λ_new,G,H)-fλ(p_opt,λ,G,H)), " < " , ϵ_λ_f, " AND ", norm(p_new - p_opt), " < " , ϵ_λ_p)
+            println(abs(fλ(p_new,λ_new,G,H)-fλ(p_opt,λ,G,H)), " < " , ϵ_λ_f, " AND ", p_change_normed, " < " , ϵ_λ_p)
             global dλ = min(2*dλ,one(Float64))
             λ_new = λ + dλ
             println("dλ = ", dλ)
@@ -170,9 +171,10 @@ function main()
                 verbose = print_FrankWolfe
             )
             #println(abs(fλ(p_new,λ_new)-fλ(p_opt,λ_new))," = ",history[end].f_change_sum," ?")
+            p_change_normed = norm(p_new - p_opt) / sqrt(2 * m_size)
         end
         println("END LOOP 1")
-        println(abs(fλ(p_new,λ_new,G,H)-fλ(p_opt,λ,G,H)), " > " , ϵ_λ_f, " OR ", norm(p_new - p_opt), " > " , ϵ_λ_p)
+        println(abs(fλ(p_new,λ_new,G,H)-fλ(p_opt,λ,G,H)), " > " , ϵ_λ_f, " OR ", p_change_normed, " > " , ϵ_λ_p)
         
         # if the last while loop's condition is not met (anymore), dλ is too large and can be halved at least once
         global dλ = max(dλ/2,dλ_min)
@@ -195,13 +197,14 @@ function main()
                 callback = callback,
                 verbose = print_FrankWolfe
             )
+            p_change_normed = norm(p_new - p_opt) / sqrt(2 * m_size)
         end
         println("BETWEEN")
 
         # d_λ is halved until both values are smaller than their thresholds (or dλ is smaller than minimum)
-        while (abs(fλ(p_new,λ_new,G,H)-fλ(p_opt,λ,G,H)) > ϵ_λ_f   ||   norm(p_new - p_opt) > ϵ_λ_p)   &&   dλ > dλ_min
+        while (abs(fλ(p_new,λ_new,G,H)-fλ(p_opt,λ,G,H)) > ϵ_λ_f   ||   p_change_normed > ϵ_λ_p)   &&   dλ > dλ_min
             # println("|",fλ(p_opt,λ_new)," - ",fλ(p_opt,λ),"| = ")
-            println(abs(fλ(p_new,λ_new,G,H)-fλ(p_opt,λ,G,H)), " > " , ϵ_λ_f, " OR ", norm(p_new - p_opt), " > " , ϵ_λ_p)
+            println(abs(fλ(p_new,λ_new,G,H)-fλ(p_opt,λ,G,H)), " > " , ϵ_λ_f, " OR ", p_change_normed, " > " , ϵ_λ_p)
             global dλ = max(dλ/2,dλ_min)
             λ_new = λ + dλ
             println("dλ = ", dλ)
@@ -221,9 +224,10 @@ function main()
                 verbose = print_FrankWolfe
             )
             #println(abs(fλ(p_new,λ_new)-fλ(p_opt,λ_new))," = ",history[end].f_change_sum," ?")
+            p_change_normed = norm(p_new - p_opt) / sqrt(2 * m_size)
         end
         println("END LOOP 2")
-        println(abs(fλ(p_new,λ_new,G,H)-fλ(p_opt,λ,G,H)), " < " , ϵ_λ_f, " AND ", norm(p_new - p_opt), " < " , ϵ_λ_p)
+        println(abs(fλ(p_new,λ_new,G,H)-fλ(p_opt,λ,G,H)), " < " , ϵ_λ_f, " AND ", p_change_normed, " < " , ϵ_λ_p)
         println("λ: ",λ," + ",dλ," = ",λ_new)
         global λ = λ_new
         # criterion is met, λ is set correctly
