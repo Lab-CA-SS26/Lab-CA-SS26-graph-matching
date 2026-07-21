@@ -46,8 +46,8 @@ function main()
     # define F0 and F1 and their gradients dependent only on P as G and H are constant matrices from here on
     f0_minimize(P) = GraphMatchingUtils.f0(P,G,H)
     ∇f0_minimize!(storage, P) = GraphMatchingUtils.∇f0!(storage, P, G, H)
-    f1_minimize(P) = GraphMatchingUtils.f1(P,G,H)
-    ∇f1_minimize!(storage, P) = GraphMatchingUtils.∇f1!(storage, P, G, H)
+    f1_minimize(P) = -GraphMatchingUtils.f1(P,G,H)
+    ∇f1_minimize!(storage, P) = -GraphMatchingUtils.∇f1!(storage, P, G, H)
     # allocate fixed space for the gradient matrices so that they don't allocate new space in each calculation
     storage0 = Matrix{Float64}(undef, m_size, m_size)
     storage1 = Matrix{Float64}(undef, m_size, m_size)
