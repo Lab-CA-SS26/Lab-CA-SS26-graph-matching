@@ -213,7 +213,7 @@ function main()
             # println("|",fλ(p_opt,λ_new)," - ",fλ(p_opt,λ),"| = ")
             println(abs(fλ(p_new,λ_new,G,H)-fλ(p_opt,λ,G,H)), " > " , ϵ_λ_f, " OR ", p_change_normed, " > " , ϵ_λ_p)
             global dλ = max(dλ/2,dλ_min)
-            λ_new = λ + dλ
+            λ_new = min(λ + dλ, one(Float64))
             println("dλ = ", dλ)
 
             if !solveQAP
