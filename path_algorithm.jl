@@ -8,13 +8,13 @@ using FrankWolfe
 function main()
     # read input and configurations from config.toml (input example given in config.template.toml)
     config = TOML.parsefile("config.toml")
-    solveQAP = config["dataInput"]["solveQAP"]  #if true, the QAP is solved instead of the graph matching problem
-    qapLib_example = config["dataInput"]["qapLib_example"]
-    m1_file = "QapLib/$(qapLib_example)1.csv"
-    m2_file = "QapLib/$(qapLib_example)2.csv"
-    ϵ_λ_f = config["dataInput"]["epsilon_lambda_f"]
-    ϵ_λ_p = config["dataInput"]["epsilon_lambda_p"]
-    print_FrankWolfe = config["printing"]["print_FrankWolfe"]
+    solveQAP = config["dataInput"]["solveQAP"]  # if true, the QAP is solved instead of the graph matching problem
+    qapLib_example = config["dataInput"]["qapLib_example"]  # see https://qaplib.mgi.polymtl.ca/
+    m1_file = "QapLib/$(qapLib_example)1.csv"   # contains first adjacency matrix
+    m2_file = "QapLib/$(qapLib_example)2.csv"   # contains second adjacency matrix
+    ϵ_λ_f = config["dataInput"]["epsilon_lambda_f"] # threshold for change in Fλ between iterations
+    ϵ_λ_p = config["dataInput"]["epsilon_lambda_p"] # threshold for change in P between iterations
+    print_FrankWolfe = config["printing"]["print_FrankWolfe"]   # whether to print FrankWolfe's output or not
 
     println("-----------------------")
     println("START")
@@ -23,7 +23,7 @@ function main()
     G = readdlm(m1_file)
     H = readdlm(m2_file)
     
-    # if graphs have different sizes extend the smaller one by zero rows and columns
+    # if graphs have different sizes extend the smaller one by zero rows and columns (as stated in the paper)
     diffSize = size(G,1)-size(H,1)
     if diffSize > 0
         # G is greater
@@ -48,7 +48,7 @@ function main()
     ∇f0_minimize!(storage, P) = GraphMatchingUtils.∇f0!(storage, P, G, H)
     f1_minimize(P) = GraphMatchingUtils.f1(P,G,H)
     ∇f1_minimize!(storage, P) = GraphMatchingUtils.∇f1!(storage, P, G, H)
-    # allocate fixed space for the gradient matrices so that they don't allocate new space for each calculation
+    # allocate fixed space for the gradient matrices so that they don't allocate new space in each calculation
     storage0 = Matrix{Float64}(undef, m_size, m_size)
     storage1 = Matrix{Float64}(undef, m_size, m_size)
 
@@ -56,6 +56,7 @@ function main()
     p_start = Matrix(1.0I, m_size, m_size)
     lmo = FrankWolfe.BirkhoffPolytopeLMO() #via Hungarian algorithm
 
+    # define callback function and save FW iteration data in "history"
     history = []
 
     prev_f = Ref{Union{Nothing,Float64}}(nothing)
@@ -92,7 +93,7 @@ function main()
         return true
     end
 
-    # find minimum of F0 (F1 for QAP)
+    # find initial minimum of F0 (F1 for QAP)
     # TODO use Newton instead of FrankWolfe for initialization as stated in paper's implementation details
     if !solveQAP
         global p_opt, _ = FrankWolfe.frank_wolfe(
