@@ -293,6 +293,52 @@ function main()
     CSV.write("frank_wolfe_history.csv", df_history)
     println("History saved")
 
+    results_filename = "Results/$(qapLib_example)_$(ϵ_λ_f)_$(ϵ_λ_p)_$(solveQAP).txt"
+    # save results to file
+    open(results_filename, "w") do io
+        println(io, "="^60)
+        println(io, "Results for graph matching/QAP problem")
+        println(io, "="^60)
+        println(io)
+        println(io, "QapLib file: $(qapLib_example)")
+        println(io, "ϵ_λ_f: $(ϵ_λ_f)")
+        println(io, "ϵ_λ_p: $(ϵ_λ_p)")
+        println(io, "solveQAP: $(solveQAP)")
+        println(io)
+        println(io, "Runtime: $(elapsed_time) seconds")
+        println(io, "λ Iterations: $(count_iter)")
+        println(io)
+        if !solveQAP
+            println(io, "Cost at start:")
+            println(io, "F0: $(GraphMatchingUtils.f0(p_start, G, H))")
+            println(io, "F1: $(GraphMatchingUtils.f1(p_start, G, H))")
+            println(io)
+            println(io, "Cost at end:")
+            println(io, "F0: $(GraphMatchingUtils.f0(p_opt, G, H))")
+            println(io, "F1: $(GraphMatchingUtils.f1(p_opt, G, H))")
+        else
+            println(io, "Value of QAP")
+            println(io, "G -> H: $(GraphMatchingUtils.qapVal(p_opt, G, H))")
+            println(io, "H -> G: $(GraphMatchingUtils.qapVal(p_opt, H, G)) (ignore)")
+            println(io, "Optimal: $(GraphMatchingUtils.qapVal(p_opt_qap, H, G))")
+        end
+        println(io)
+        println(io, "-"^60)
+        println(io, "Resulting Matrix P")
+        println(io, "-"^60)
+        println(io)
+        show(io, "text/plain", two_row(Permutation(p_opt)))
+        if solveQAP
+            println(io)
+            println(io, "-"^60)
+            println(io, "Optimal Matrix P")
+            println(io, "-"^60)
+            println(io)
+            show(io, "text/plain", two_row(Permutation(p_opt_qap)))
+        end
+    end
+    println("Results saved")
+
     println("END")
     println("-----------------------")
 end
