@@ -118,6 +118,12 @@ function main()
     # begin with λ=0; iteratively increase up until 1
     global λ = 0
     
+    if(!solveQAP)
+            global fλ = GraphMatchingUtils.fλ
+        else
+            global fλ = GraphMatchingUtils.fλ_QAP
+        end
+    
     count_iter = 0
     while(λ < 1.0)
         count_iter += 1
