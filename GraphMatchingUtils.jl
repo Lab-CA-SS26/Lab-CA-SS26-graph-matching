@@ -154,7 +154,7 @@ module GraphMatchingUtils
    function plotAll(λ, f0_vals, f1_vals, fλ_vals)
     scatter(λ, f0_vals, label="F0(P*(λ))", color=:blue, xlabel="λ", ylabel="Function Value", title="Function Values over λ")
     scatter!(λ, f1_vals, label="F1(P*(λ))", color=:red)
-    scatter!(λ, fλ_vals, label="Fλ(P*(λ))", color=:violet)
+    scatter!(λ, fλ_vals, label="Fλ(P*(λ))", color=:purple)
     display(current())
    end
 end
