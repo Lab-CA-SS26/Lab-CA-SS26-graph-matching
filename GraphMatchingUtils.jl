@@ -60,26 +60,28 @@ module GraphMatchingUtils
    # function F0 as stated in the paper
    function f0(P,G,H)
     value = sqd_frob(G*P .- P*H)
-    return value / (sqd_frob(G) + sqd_frob(H))
+    return value ./ (sqd_frob(G) + sqd_frob(H))
    end
 
    # gradient of F0 as stated in the paper
    # save solution value in variable "storage" for space economy
    function ∇f0!(storage, P, G, H)
-       storage .= 2.0 .* ((G^2) * P .- 2.0 .* G * P * H .+ P * (H^2))
+        value = 2.0 .* ((G^2) * P .- 2.0 .* G * P * H .+ P * (H^2))
+        storage .= value ./ (sqd_frob(G) + sqd_frob(H))
    end
 
    # function F1 as stated in the paper
    function f1(P, G, H)
     constantTerm = tr(GraphMatchingUtils.laplacian(G)^2)+tr(GraphMatchingUtils.laplacian(H)^2)
     value = -tr(Δ(G,H)'*P) - 2.0 * (vec(P)' * vec(laplacian(G) * P * laplacian(H))) + constantTerm
-    return value / (sqd_frob(G) + sqd_frob(H))
+    return value ./ (sqd_frob(G) + sqd_frob(H))
    end
 
    # gradient of F1 as stated in the paper
    # save solution value in variable "storage" for space economy
    function ∇f1!(storage, P, G, H)
-    storage .= -Δ(G,H)' .- 2.0 .* laplacian(G) * P * laplacian(H)
+    value = -Δ(G,H) .- 4.0 .* laplacian(G) * P * laplacian(H)
+    storage .= value ./ (sqd_frob(G) + sqd_frob(H))
    end
 
    function fλ(P, λ, G, H)
