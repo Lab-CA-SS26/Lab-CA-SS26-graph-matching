@@ -276,6 +276,7 @@ function main()
             println("CONTINUE")
         end
     end
+    p_opt = inv(p_opt) # invert P to get the correct mapping from H to G
     elapsed_time = time() - t1
     println("Elapsed time: ", elapsed_time, " seconds")
 
