@@ -156,5 +156,5 @@ module GraphMatchingUtils
     scatter!(λ, f1_vals, label="F1(P*(λ))", color=:red)
     scatter!(λ, fλ_vals, label="Fλ(P*(λ))", color=:violet)
     display(current())
-   end 
+   end
 end
