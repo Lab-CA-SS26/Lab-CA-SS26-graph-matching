@@ -1,5 +1,6 @@
 module GraphMatchingUtils
-    using LinearAlgebra
+    using LinearAlgebra, Plots
+    export plotAll
     export isPerm, sqd_frob, f0, ∇f0!, f1, ∇f1!, fλ, fλ_QAP, ∇fλ!, ∇fλ_QAP!, qapVal
     export FλForP, ∇FλForP!, FλForP_QAP, ∇FλForP_QAP!
 
@@ -148,5 +149,12 @@ module GraphMatchingUtils
 
    function qapVal(P,G,H)
     return tr(G*P*H'*P')
+   end 
+
+   function plotAll(λ, f0_vals, f1_vals, fλ_vals)
+    scatter(λ, f0_vals, label="F0(P*(λ))", color=:blue, xlabel="λ", ylabel="Function Value", title="Function Values over λ")
+    scatter!(λ, f1_vals, label="F1(P*(λ))", color=:red)
+    scatter!(λ, fλ_vals, label="Fλ(P*(λ))", color=:violet)
+    display(current())
    end 
 end
