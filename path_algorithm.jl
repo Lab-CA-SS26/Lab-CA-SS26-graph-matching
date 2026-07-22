@@ -118,6 +118,7 @@ function main()
     # begin with λ=0; iteratively increase up until 1
     global λ = 0.0
     
+    # redefine f0, f1 and fλ depending on whether the QAP should be solved or not, s.t. f0 is always convex and f1 is always concave.
     if !solveQAP
         f0 = GraphMatchingUtils.f0
         f1 = GraphMatchingUtils.f1
@@ -133,6 +134,8 @@ function main()
     f0_list = [f0(p_opt,G,H)]
     f1_list = [f1(p_opt,G,H)]
     fλ_list = [fλ(p_opt,λ,G,H)]
+
+    
     while(λ < 1.0)
         count_iter += 1
         # set first possible value for λ_new and find best one in the following part
