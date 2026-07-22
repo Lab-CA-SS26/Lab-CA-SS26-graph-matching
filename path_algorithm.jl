@@ -158,8 +158,8 @@ function main()
         while abs(fλ(p_new,λ_new,G,H)-fλ(p_opt,λ,G,H)) < ϵ_λ_f   &&   p_change_normed < ϵ_λ_p   &&   λ_new < one(Float64)
             # println("|",fλ(p_opt,λ_new)," - ",fλ(p_opt,λ),"| = ")
             println(abs(fλ(p_new,λ_new,G,H)-fλ(p_opt,λ,G,H)), " < " , ϵ_λ_f, " AND ", p_change_normed, " < " , ϵ_λ_p)
-            global dλ = min(2*dλ,one(Float64))
-            λ_new = λ + dλ
+            global dλ = 2*dλ
+            λ_new = min(λ + dλ, one(Float64))
             println("dλ = ", dλ)
 
             if !solveQAP
