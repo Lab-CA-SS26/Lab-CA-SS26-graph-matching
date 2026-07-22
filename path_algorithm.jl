@@ -2,7 +2,7 @@ using Revise
 includet("GraphMatchingUtils.jl")
 using .GraphMatchingUtils
 using TOML
-using DataFrames, CSV, DelimitedFiles, LinearAlgebra, Permutations
+using DataFrames, CSV, DelimitedFiles, Plots, LinearAlgebra, Permutations
 using FrankWolfe
 
 function main()
@@ -116,15 +116,23 @@ function main()
     # change in λ is dynamically adjusted; starts at minimum
     global dλ = dλ_min
     # begin with λ=0; iteratively increase up until 1
-    global λ = 0
+    global λ = 0.0
     
-    if(!solveQAP)
-            global fλ = GraphMatchingUtils.fλ
-        else
-            global fλ = GraphMatchingUtils.fλ_QAP
-        end
+    if !solveQAP
+        f0 = GraphMatchingUtils.f0
+        f1 = GraphMatchingUtils.f1
+        fλ = GraphMatchingUtils.fλ
+    else
+        f0 = (P, G, H) -> -GraphMatchingUtils.f1(P, G, H)
+        f1 = (P, G, H) -> -GraphMatchingUtils.f0(P, G, H)
+        fλ = GraphMatchingUtils.fλ_QAP
+    end
     
     count_iter = 0
+    λ_list = [λ]
+    f0_list = [f0(p_opt,G,H)]
+    f1_list = [f1(p_opt,G,H)]
+    fλ_list = [fλ(p_opt,λ,G,H)]
     while(λ < 1.0)
         count_iter += 1
         # set first possible value for λ_new and find best one in the following part
@@ -262,6 +270,12 @@ function main()
         =#
 
         p_opt = p_new
+
+        push!(λ_list, λ)
+        push!(f0_list, f0(p_opt,G,H))
+        push!(f1_list, f1(p_opt,G,H))
+        push!(fλ_list, fλ(p_opt,λ,G,H))
+
         # stop immediately if FrankWolfe arrives at a Permutationmatrix as this is a feasible minimum
         if GraphMatchingUtils.isPerm(p_opt)
             println("DONE")
@@ -282,11 +296,11 @@ function main()
 
     println("Solving QAP: ", solveQAP)
     println("Cost at start:")
-    println("F0: ", GraphMatchingUtils.f0(p_start, G, H))
-    println("F1: ", GraphMatchingUtils.f1(p_start, G, H))
+    println("F0: ", f0(p_start, G, H))
+    println("F1: ", f1(p_start, G, H))
     println("Cost at end:")
-    println("F0: ", GraphMatchingUtils.f0(p_opt, G, H))
-    println("F1: ", GraphMatchingUtils.f1(p_opt, G, H))
+    println("F0: ", f0(p_opt, G, H))
+    println("F1: ", f1(p_opt, G, H))
     println("Value of QAP")
     println("G -> H: ", GraphMatchingUtils.qapVal(p_opt, G, H))
     println("H -> G: ", GraphMatchingUtils.qapVal(p_opt, H, G))
@@ -318,16 +332,16 @@ function main()
         println(io)
         if !solveQAP
             println(io, "Cost at start:")
-            println(io, "F0: $(GraphMatchingUtils.f0(p_start, G, H))")
-            println(io, "F1: $(GraphMatchingUtils.f1(p_start, G, H))")
+            println(io, "F0: $(f0(p_start, G, H))")
+            println(io, "F1: $(f1(p_start, G, H))")
             println(io)
             println(io, "Cost at end:")
-            println(io, "F0: $(GraphMatchingUtils.f0(p_opt, G, H))")
-            println(io, "F1: $(GraphMatchingUtils.f1(p_opt, G, H))")
+            println(io, "F0: $(f0(p_opt, G, H))")
+            println(io, "F1: $(f1(p_opt, G, H))")
         else
             println(io, "Value of QAP")
-            println(io, "G -> H: $(GraphMatchingUtils.qapVal(p_opt, G, H))")
-            println(io, "H -> G: $(GraphMatchingUtils.qapVal(p_opt, H, G)) (ignore)")
+            println(io, "G -> H: $(GraphMatchingUtils.qapVal(p_opt, G, H)) (ignore)")
+            println(io, "H -> G: $(GraphMatchingUtils.qapVal(p_opt, H, G))")
             println(io, "Optimal: $(GraphMatchingUtils.qapVal(p_opt_qap, H, G))")
         end
         println(io)
@@ -346,6 +360,8 @@ function main()
         end
     end
     println("Results saved")
+
+    plotAll(λ_list, f0_list, f1_list, fλ_list)
 
     println("END")
     println("-----------------------")
