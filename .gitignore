@@ -1,6 +1,5 @@
-*.csv
-test.*
-*.txt
-*.png
-generateRandomMatrices.jl
 config.toml
+/QapLib
+/Results
+/testing
+TestingUtils.jl
