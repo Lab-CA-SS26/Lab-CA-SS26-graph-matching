@@ -54,6 +54,7 @@ function main()
     p_start = Matrix(1.0I, m_size, m_size)
     lmo = FrankWolfe.BirkhoffPolytopeLMO() #via Hungarian algorithm
 
+    #=
     # define callback function and save FW iteration data in "history"
     history = []
 
@@ -90,6 +91,7 @@ function main()
 
         return true
     end
+    =#
 
     # find initial minimum of F0 (F1 for QAP)
     # TODO use Newton instead of FrankWolfe for initialization as stated in paper's implementation details
@@ -154,7 +156,7 @@ function main()
             fλ_new_minimize, ∇fλ_new_minimize, lmo, p_opt; 
             epsilon = 1e-8,
             max_iteration = 10_000,
-            callback = callback,
+            #callback = callback,
             verbose=print_FrankWolfe
         )
         #println(abs(fλ(p_new,λ_new)-fλ(p_opt,λ_new))," = ",history[end].f_change_sum," ?")
@@ -185,7 +187,7 @@ function main()
                 fλ_new_minimize, ∇fλ_new_minimize, lmo, p_opt; 
                 epsilon = 1e-8,
                 max_iteration = 10_000,
-                callback = callback,
+                #callback = callback,
                 verbose = print_FrankWolfe
             )
             #println(abs(fλ(p_new,λ_new)-fλ(p_opt,λ_new))," = ",history[end].f_change_sum," ?")
@@ -212,7 +214,7 @@ function main()
                 fλ_new_minimize, ∇fλ_new_minimize, lmo, p_opt; 
                 epsilon = 1e-8,
                 max_iteration = 10_000,
-                callback = callback,
+                #callback = callback,
                 verbose = print_FrankWolfe
             )
             p_change_normed = norm(p_new - p_opt) / sqrt(2 * m_size)
@@ -238,7 +240,7 @@ function main()
                 fλ_new_minimize, ∇fλ_new_minimize, lmo, p_opt; 
                 epsilon = 1e-8,
                 max_iteration = 10_000,
-                callback = callback,
+                #callback = callback,
                 verbose = print_FrankWolfe
             )
             #println(abs(fλ(p_new,λ_new)-fλ(p_opt,λ_new))," = ",history[end].f_change_sum," ?")
@@ -314,9 +316,11 @@ function main()
     display(two_row(Permutation(p_opt_qap)))
     println(GraphMatchingUtils.qapVal(p_opt_qap, H, G))
 
+    #=
     df_history = DataFrame(history)
     CSV.write("frank_wolfe_history.csv", df_history)
     println("History saved")
+    =#
 
     results_filename = "Results/$(qapLib_example)_$(ϵ_λ_f)_$(ϵ_λ_p)_$(solveQAP).txt"
     # save results to file
