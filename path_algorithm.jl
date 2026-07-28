@@ -44,9 +44,6 @@ function main()
     println("Start timer")
     t1 = time()
     
-    # define F0 and F1 and their gradients dependent only on P as G and H are constant matrices from here on
-    f0_minimize(P) = GraphMatchingUtils.f0(P,G,H)
-    ∇f0_minimize!(storage, P) = GraphMatchingUtils.∇f0!(storage, P, G, H)
     # allocate fixed space for the gradient matrices so that they don't allocate new space in each calculation
     storage0 = Matrix{Float64}(undef, m_size, m_size)
     storage1 = Matrix{Float64}(undef, m_size, m_size)
@@ -97,22 +94,20 @@ function main()
     # find initial minimum of F0 (F1 for QAP)
     # TODO use Newton instead of FrankWolfe for initialization as stated in paper's implementation details
     if !solveQAP
-        global p_opt, _ = FrankWolfe.frank_wolfe(
-        f0_minimize, ∇f0_minimize!, lmo, p_start;
-        epsilon = 1e-8,
-        max_iteration = 10_000,
-        callback = callback,
-        )
+        init_f   = FλForP(0.0, G, H)
+        init_∇!  = ∇FλForP!(storage0, storage1, 0.0, G, H)
     else
         init_f   = FλForP_QAP(0.0, G, H)
         init_∇!  = ∇FλForP_QAP!(storage0, storage1, 0.0, G, H)
-        global p_opt, _ = FrankWolfe.frank_wolfe(
-        init_f, init_∇!, lmo, p_start;
-        epsilon = 1e-8,
-        max_iteration = 10_000,
-        callback = callback,
-        )
     end
+    
+    global p_opt, _ = FrankWolfe.frank_wolfe(
+    init_f, init_∇!, lmo, p_start;
+    epsilon = 1e-8,
+    max_iteration = 10_000,
+    #callback = callback,
+    verbose=print_FrankWolfe
+    )
 
     # dλ_min is minimum possible change in λ between iterations as stated in the paper
     global dλ_min = 1.0e-05
