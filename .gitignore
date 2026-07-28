@@ -1,5 +1,6 @@
 *.csv
 test.*
 *.txt
+*.png
 generateRandomMatrices.jl
 config.toml
