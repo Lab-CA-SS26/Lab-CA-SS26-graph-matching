@@ -2,7 +2,8 @@ using Revise
 includet("GraphMatchingUtils.jl")
 using .GraphMatchingUtils
 using TOML
-using DataFrames, CSV, DelimitedFiles, Plots, LinearAlgebra, Permutations
+using DataFrames, CSV, DelimitedFiles, Plots, Dates
+using LinearAlgebra, Permutations
 using FrankWolfe
 
 function main()
@@ -322,9 +323,12 @@ function main()
     println("History saved")
     =#
 
-    results_filename = "Results/$(qapLib_example)_$(ϵ_λ_f)_$(ϵ_λ_p)_$(solveQAP).txt"
+    timestamp = Dates.format(now(), "yyyy-mm-dd_HH-MM-SS")
+    results_filename = "Results/$(timestamp)_$(qapLib_example)_$(ϵ_λ_f)_$(ϵ_λ_p)_$(solveQAP).txt"
     # save results to file
     open(results_filename, "w") do io
+        println(io, "Timestamp: $(timestamp)")
+        println(io)
         println(io, "="^60)
         println(io, "Results for graph matching/QAP problem")
         println(io, "="^60)

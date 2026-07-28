@@ -2,7 +2,7 @@
 
 julia_version = "1.12.6"
 manifest_format = "2.0"
-project_hash = "4e4a6c0fd5ac5c12d44f796ac997926922a091e1"
+project_hash = "db36beb6aaf223e33d273dfe2f119fdbb05ef59f"
 
 [[deps.AliasTables]]
 deps = ["PtrArrays", "Random"]
@@ -520,7 +520,7 @@ uuid = "b964fa9f-0449-5b57-a5c2-d3ea65f4040f"
 version = "1.4.0"
 
 [[deps.Lab-CA-SS26-graph-matching]]
-deps = ["CSV", "DataFrames", "DelimitedFiles", "FrankWolfe", "LinearAlgebra", "Permutations", "Revise", "TOML"]
+deps = ["CSV", "DataFrames", "DelimitedFiles", "FrankWolfe", "LinearAlgebra", "Permutations", "Plots", "Revise", "TOML"]
 path = "."
 uuid = "556a0210-cb54-430a-8041-38e6d7206121"
 version = "0.1.0"
