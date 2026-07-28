@@ -372,7 +372,12 @@ function main()
     end
     println("Results saved")
 
-    plotAll(λ_list, f0_list, f1_list, fλ_list)
+    if !solveQAP
+        plotTitle = "$(qapLib_example) ϵλf=$(ϵ_λ_f) ϵλp=$(ϵ_λ_p) GM"
+    else
+        plotTitle = "$(qapLib_example) ϵλf=$(ϵ_λ_f) ϵλp=$(ϵ_λ_p) QAP"
+    end
+    plotAll(λ_list, f0_list, f1_list, fλ_list, plotTitle)
 
     println("END")
     println("-----------------------")
