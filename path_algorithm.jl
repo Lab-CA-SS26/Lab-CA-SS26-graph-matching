@@ -96,14 +96,12 @@ function main()
     f1_list = [f1(p_opt,G,H)]
     fλ_list = [fλ(p_opt,λ,G,H)]
 
-    
     while(λ < 1.0)
         count_iter += 1
-        # set first possible value for λ_new and find best one in the following part
+        # set first possible value for λ_new
         local λ_new = λ + dλ
 
-
-        # calculate local optimum for λ_new
+        # calculate local optimum w.r.t. initial λ_new
         if !solveQAP
             fλ_new_minimize = FλForP(λ_new, G, H)
             ∇fλ_new_minimize = ∇FλForP!(storage0, storage1, λ_new, G, H)
@@ -146,7 +144,7 @@ function main()
             p_change_normed = norm(p_new - p_opt) / sqrt(2 * m_size)
         end
         
-        # if the last while loop's condition is not met (anymore), dλ is too large and can be halved at least once
+        # if the last while loop's condition is not met (anymore), dλ is one step too large and can be halved once directly
         global dλ = max(dλ/2,dλ_min)
         λ_new = λ + dλ
         println("dλ = ", dλ)
@@ -169,7 +167,7 @@ function main()
             p_change_normed = norm(p_new - p_opt) / sqrt(2 * m_size)
         end
 
-        # d_λ is halved until both values are smaller than their thresholds (or dλ is smaller than minimum)
+        # d_λ is halved until both values are smaller than their thresholds (or dλ is already at minimum)
         while (abs(fλ(p_new,λ_new,G,H)-fλ(p_opt,λ,G,H)) > ϵ_λ_f   ||   p_change_normed > ϵ_λ_p)   &&   dλ > dλ_min
             global dλ = max(dλ/2,dλ_min)
             λ_new = min(λ + dλ, one(Float64))
