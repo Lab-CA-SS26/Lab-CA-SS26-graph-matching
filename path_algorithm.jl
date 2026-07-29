@@ -23,8 +23,8 @@ function main()
     println("START")
     
     # read matrices G and H
-    G = readdlm(m1_file)
-    H = readdlm(m2_file)
+    G = readdlm(m2_file)
+    H = readdlm(m1_file)
     
     # if graphs have different sizes extend the smaller one by zero rows and columns (as stated in the paper)
     diffSize = size(G,1)-size(H,1)
@@ -213,7 +213,6 @@ function main()
             println("CONTINUE")
         end
     end
-    p_opt = inv(p_opt) # invert P to get the correct mapping from H to G
     elapsed_time = time() - t1
     println("Elapsed time: ", elapsed_time, " seconds")
 
@@ -226,13 +225,12 @@ function main()
     println("F1: ", f1(p_opt, G, H))
     println("Value of QAP")
     println("G -> H: ", GraphMatchingUtils.qapVal(p_opt, G, H))
-    println("H -> G: ", GraphMatchingUtils.qapVal(p_opt, H, G))
     println("Optimum of ",qapLib_example,": ")
     p_opt_qap = readdlm("QapLib/$(qapLib_example)Opt.csv", Int64)
     p_opt_qap = vec(p_opt_qap)
     p_opt_qap = Matrix(Permutation(p_opt_qap))
     display(two_row(Permutation(p_opt_qap)))
-    println(GraphMatchingUtils.qapVal(p_opt_qap, H, G))
+    println(GraphMatchingUtils.qapVal(p_opt_qap, G, H))
 
     timestamp = Dates.format(now(), "yyyy-mm-dd_HH-MM-SS")
     results_filename = "Results/$(timestamp)_$(qapLib_example)_$(ϵ_λ_f)_$(ϵ_λ_p)_$(solveQAP).txt"
@@ -256,19 +254,14 @@ function main()
             println(io, "Cost at start:")
             println(io, "F0: $(f0(p_start, G, H))")
             println(io, "F1: $(f1(p_start, G, H))")
-            println(io, "F0: $(f0(p_start, H, G))")
-            println(io, "F1: $(f1(p_start, H, G))")
             println(io)
             println(io, "Cost at end:")
             println(io, "F0: $(f0(p_opt, G, H))")
             println(io, "F1: $(f1(p_opt, G, H))")
-            println(io, "F0: $(f0(p_opt, H, G))")
-            println(io, "F1: $(f1(p_opt, H, G))")
         else
             println(io, "Value of QAP")
-            println(io, "G -> H: $(GraphMatchingUtils.qapVal(p_opt, G, H)) (ignore)")
-            println(io, "H -> G: $(GraphMatchingUtils.qapVal(p_opt, H, G))")
-            println(io, "Optimal: $(GraphMatchingUtils.qapVal(p_opt_qap, H, G))")
+            println(io, "$(GraphMatchingUtils.qapVal(p_opt, G, H))")
+            println(io, "Optimal: $(GraphMatchingUtils.qapVal(p_opt_qap, G, H))")
         end
         println(io)
         println(io, "-"^60)
