@@ -1,8 +1,10 @@
 using Revise
 includet("GraphMatchingUtils.jl")
 using .GraphMatchingUtils
+includet("TestingUtils.jl")
+using .TestingUtils
 using TOML
-using DataFrames, CSV, DelimitedFiles, Plots, Dates
+using DataFrames, CSV, DelimitedFiles, Dates
 using LinearAlgebra, Permutations
 using FrankWolfe
 
