@@ -81,13 +81,13 @@ function main()
     
     # redefine f0, f1 and fλ depending on whether the QAP should be solved or not, s.t. f0 is always convex and f1 is always concave.
     if !solveQAP
-        f0 = GraphMatchingUtils.f0
-        f1 = GraphMatchingUtils.f1
-        fλ = GraphMatchingUtils.fλ
+        f0Normalized = GraphMatchingUtils.f0Normalized
+        f1Normalized = GraphMatchingUtils.f1Normalized
+        fλNormalized = GraphMatchingUtils.fλNormalized
     else
-        f0 = (P, G, H) -> -GraphMatchingUtils.f1(P, G, H)
-        f1 = (P, G, H) -> -GraphMatchingUtils.f0(P, G, H)
-        fλ = GraphMatchingUtils.fλ_QAP
+        f0Normalized = (P, G, H) -> -GraphMatchingUtils.f1Normalized(P, G, H)
+        f1Normalized = (P, G, H) -> -GraphMatchingUtils.f0Normalized(P, G, H)
+        fλNormalized = GraphMatchingUtils.fλ_QAP
     end
     
     count_iter = 0
@@ -115,14 +115,14 @@ function main()
             max_iteration = 10_000,
             verbose=print_FrankWolfe
         )
-        p_change_normed = norm(p_new - p_opt) / sqrt(2 * m_size)
+        p_change_normalized = norm(p_new - p_opt) / sqrt(2 * m_size)
 
         p_last::Union{Nothing, Matrix{Float64}} = nothing
 
         # update dλ until criterion is met
         # TODO implemented new stopping criterion. Need to still find out ϵ_f and ϵ_p values from FrankWolfe implementation and calculate ϵ_λ_f and ϵ_λ_p with added input M.
         # d_λ is doubled until one value is larger than it's threshold (or new λ is already 1)
-        while abs(fλ(p_new,λ_new,G,H)-fλ(p_opt,λ,G,H)) < ϵ_λ_f   &&   p_change_normed < ϵ_λ_p   &&   λ_new < one(Float64)
+        while abs(fλNormalized(p_new,λ_new,G,H)-fλNormalized(p_opt,λ,G,H)) < ϵ_λ_f   &&   p_change_normalized < ϵ_λ_p   &&   λ_new < one(Float64)
             global dλ = 2*dλ
             λ_new = min(λ + dλ, one(Float64))
             println("dλ = ", dλ)
@@ -141,7 +141,7 @@ function main()
                 max_iteration = 10_000,
                 verbose = print_FrankWolfe
             )
-            p_change_normed = norm(p_new - p_opt) / sqrt(2 * m_size)
+            p_change_normalized = norm(p_new - p_opt) / sqrt(2 * m_size)
         end
         
         # if the last while loop's condition is not met (anymore), dλ is one step too large and can be halved once directly
@@ -164,11 +164,11 @@ function main()
                 max_iteration = 10_000,
                 verbose = print_FrankWolfe
             )
-            p_change_normed = norm(p_new - p_opt) / sqrt(2 * m_size)
+            p_change_normalized = norm(p_new - p_opt) / sqrt(2 * m_size)
         end
 
         # d_λ is halved until both values are smaller than their thresholds (or dλ is already at minimum)
-        while (abs(fλ(p_new,λ_new,G,H)-fλ(p_opt,λ,G,H)) > ϵ_λ_f   ||   p_change_normed > ϵ_λ_p)   &&   dλ > dλ_min
+        while (abs(fλNormalized(p_new,λ_new,G,H)-fλNormalized(p_opt,λ,G,H)) > ϵ_λ_f   ||   p_change_normalized > ϵ_λ_p)   &&   dλ > dλ_min
             global dλ = max(dλ/2,dλ_min)
             λ_new = min(λ + dλ, one(Float64))
             println("dλ = ", dλ)
@@ -186,7 +186,7 @@ function main()
                 max_iteration = 10_000,
                 verbose = print_FrankWolfe
             )
-            p_change_normed = norm(p_new - p_opt) / sqrt(2 * m_size)
+            p_change_normalized = norm(p_new - p_opt) / sqrt(2 * m_size)
         end
         println("λ: ",λ," + ",dλ," = ",λ_new)
         global λ = λ_new
