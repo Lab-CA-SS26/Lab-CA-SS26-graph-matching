@@ -54,44 +54,6 @@ function main()
     p_start = Matrix(1.0I, m_size, m_size)
     lmo = FrankWolfe.BirkhoffPolytopeLMO() #via Hungarian algorithm
 
-    #=
-    # define callback function and save FW iteration data in "history"
-    history = []
-
-    prev_f = Ref{Union{Nothing,Float64}}(nothing)
-    prev_x = Ref{Any}(nothing)
-
-    callback = function (state, args...)
-        f_current = state.primal
-        x_current = state.x
-
-        f_change =
-            prev_f[] === nothing ? NaN : abs(f_current - prev_f[])
-        decrease =
-            prev_f[] === nothing ? NaN : (prev_f[] - f_current > 0)
-        f_change_sum =
-            state.t === 1 ? 0 : history[end].f_change_sum + f_change
-        x_change =
-            prev_x[] === nothing ? NaN : norm(x_current - prev_x[])
-
-        push!(history, (
-            iter = state.t,
-            primal = state.primal,
-            dual = state.dual,
-            dual_gap = state.dual_gap,
-            f_change = f_change,
-            decrease = decrease,
-            f_change_sum = f_change_sum,
-            x_change = x_change,
-            gamma = state.gamma,
-        ))
-
-        prev_f[] = f_current
-        prev_x[] = copy(x_current)
-
-        return true
-    end
-    =#
 
     # find initial minimum of F0 (F1 for QAP)
     # TODO use Newton instead of FrankWolfe for initialization as stated in paper's implementation details
@@ -107,7 +69,6 @@ function main()
     init_f, init_∇!, lmo, p_start;
     epsilon = 1e-8,
     max_iteration = 10_000,
-    #callback = callback,
     verbose=print_FrankWolfe
     )
 
@@ -154,21 +115,16 @@ function main()
             fλ_new_minimize, ∇fλ_new_minimize, lmo, p_opt; 
             epsilon = 1e-8,
             max_iteration = 10_000,
-            #callback = callback,
             verbose=print_FrankWolfe
         )
-        #println(abs(fλ(p_new,λ_new)-fλ(p_opt,λ_new))," = ",history[end].f_change_sum," ?")
         p_change_normed = norm(p_new - p_opt) / sqrt(2 * m_size)
 
         p_last::Union{Nothing, Matrix{Float64}} = nothing
 
         # update dλ until criterion is met
         # TODO implemented new stopping criterion. Need to still find out ϵ_f and ϵ_p values from FrankWolfe implementation and calculate ϵ_λ_f and ϵ_λ_p with added input M.
-        # Is ϵ_λ_f just epsilon from the input?
-        # d_λ is doubled until one value is larger than it's threshold (or new λ is larger than 1)
+        # d_λ is doubled until one value is larger than it's threshold (or new λ is already 1)
         while abs(fλ(p_new,λ_new,G,H)-fλ(p_opt,λ,G,H)) < ϵ_λ_f   &&   p_change_normed < ϵ_λ_p   &&   λ_new < one(Float64)
-            # println("|",fλ(p_opt,λ_new)," - ",fλ(p_opt,λ),"| = ")
-            println(abs(fλ(p_new,λ_new,G,H)-fλ(p_opt,λ,G,H)), " < " , ϵ_λ_f, " AND ", p_change_normed, " < " , ϵ_λ_p)
             global dλ = 2*dλ
             λ_new = min(λ + dλ, one(Float64))
             println("dλ = ", dλ)
@@ -185,14 +141,10 @@ function main()
                 fλ_new_minimize, ∇fλ_new_minimize, lmo, p_opt; 
                 epsilon = 1e-8,
                 max_iteration = 10_000,
-                #callback = callback,
                 verbose = print_FrankWolfe
             )
-            #println(abs(fλ(p_new,λ_new)-fλ(p_opt,λ_new))," = ",history[end].f_change_sum," ?")
             p_change_normed = norm(p_new - p_opt) / sqrt(2 * m_size)
         end
-        println("END LOOP 1")
-        println(abs(fλ(p_new,λ_new,G,H)-fλ(p_opt,λ,G,H)), " > " , ϵ_λ_f, " OR ", p_change_normed, " > " , ϵ_λ_p)
         
         # if the last while loop's condition is not met (anymore), dλ is too large and can be halved at least once
         global dλ = max(dλ/2,dλ_min)
@@ -212,17 +164,13 @@ function main()
                 fλ_new_minimize, ∇fλ_new_minimize, lmo, p_opt; 
                 epsilon = 1e-8,
                 max_iteration = 10_000,
-                #callback = callback,
                 verbose = print_FrankWolfe
             )
             p_change_normed = norm(p_new - p_opt) / sqrt(2 * m_size)
         end
-        println("BETWEEN")
 
         # d_λ is halved until both values are smaller than their thresholds (or dλ is smaller than minimum)
         while (abs(fλ(p_new,λ_new,G,H)-fλ(p_opt,λ,G,H)) > ϵ_λ_f   ||   p_change_normed > ϵ_λ_p)   &&   dλ > dλ_min
-            # println("|",fλ(p_opt,λ_new)," - ",fλ(p_opt,λ),"| = ")
-            println(abs(fλ(p_new,λ_new,G,H)-fλ(p_opt,λ,G,H)), " > " , ϵ_λ_f, " OR ", p_change_normed, " > " , ϵ_λ_p)
             global dλ = max(dλ/2,dλ_min)
             λ_new = min(λ + dλ, one(Float64))
             println("dλ = ", dλ)
@@ -238,39 +186,13 @@ function main()
                 fλ_new_minimize, ∇fλ_new_minimize, lmo, p_opt; 
                 epsilon = 1e-8,
                 max_iteration = 10_000,
-                #callback = callback,
                 verbose = print_FrankWolfe
             )
-            #println(abs(fλ(p_new,λ_new)-fλ(p_opt,λ_new))," = ",history[end].f_change_sum," ?")
             p_change_normed = norm(p_new - p_opt) / sqrt(2 * m_size)
         end
-        println("END LOOP 2")
-        println(abs(fλ(p_new,λ_new,G,H)-fλ(p_opt,λ,G,H)), " < " , ϵ_λ_f, " AND ", p_change_normed, " < " , ϵ_λ_p)
         println("λ: ",λ," + ",dλ," = ",λ_new)
         global λ = λ_new
-        # criterion is met, λ is set correctly
-
-        #= not needed with new stopping criterions because FrankWolfe is already called in the while loops above
-        # set λ as constant and define F_λ and it's gradient only over P
-        if !solveQAP
-            fλ_minimize = FλForP(λ, G, H)
-            ∇fλ_minimize = ∇FλForP!(storage0, storage1, λ, G, H)
-        else
-            fλ_minimize = FλForP_QAP(λ, G, H)
-            ∇fλ_minimize = ∇FλForP_QAP!(storage0, storage1, λ, G, H)
-        end
-
-        # use FrankWolfe Algorithm with adjusted Fλ function
-        # starting at the current doubly stochastic matrix and save solution as new minimum
-        local p_temp = p_opt
-        global p_opt, _ = frank_wolfe(
-            fλ_minimize, ∇fλ_minimize, lmo, p_temp; 
-            epsilon = 1e-8,
-            max_iteration = 10_000,
-            callback = callback,
-            verbose = print_FrankWolfe
-        )
-        =#
+        # criterion is met, λ is set correctly and p_new contans the local optimum w.r.t. the new λ. Set p_opt to p_new for next iteration.
 
         p_opt = p_new
 
@@ -314,12 +236,6 @@ function main()
     display(two_row(Permutation(p_opt_qap)))
     println(GraphMatchingUtils.qapVal(p_opt_qap, H, G))
 
-    #=
-    df_history = DataFrame(history)
-    CSV.write("frank_wolfe_history.csv", df_history)
-    println("History saved")
-    =#
-
     timestamp = Dates.format(now(), "yyyy-mm-dd_HH-MM-SS")
     results_filename = "Results/$(timestamp)_$(qapLib_example)_$(ϵ_λ_f)_$(ϵ_λ_p)_$(solveQAP).txt"
     # save results to file
@@ -342,10 +258,14 @@ function main()
             println(io, "Cost at start:")
             println(io, "F0: $(f0(p_start, G, H))")
             println(io, "F1: $(f1(p_start, G, H))")
+            println(io, "F0: $(f0(p_start, H, G))")
+            println(io, "F1: $(f1(p_start, H, G))")
             println(io)
             println(io, "Cost at end:")
             println(io, "F0: $(f0(p_opt, G, H))")
             println(io, "F1: $(f1(p_opt, G, H))")
+            println(io, "F0: $(f0(p_opt, H, G))")
+            println(io, "F1: $(f1(p_opt, H, G))")
         else
             println(io, "Value of QAP")
             println(io, "G -> H: $(GraphMatchingUtils.qapVal(p_opt, G, H)) (ignore)")

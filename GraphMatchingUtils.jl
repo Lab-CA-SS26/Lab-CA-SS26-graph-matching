@@ -2,15 +2,7 @@ module GraphMatchingUtils
     using LinearAlgebra
     export isPerm, sqd_frob, f0, ∇f0!, f1, ∇f1!, fλ, fλ_QAP, ∇fλ!, ∇fλ_QAP!, qapVal
     export FλForP, ∇FλForP!, FλForP_QAP, ∇FλForP_QAP!
-
-   # permute matrix A by permutation matrix p
-   # A is matrix
-   # p is Vector where i1-->p[1], i2-->p[2], etc.
-   function permute(A,p)
-    A = A[p,:]
-    A = A[:,p]
-    return A
-   end
+    
 
    # returns true if P contains only zeros and ones and false if not
    function isPerm(P)
