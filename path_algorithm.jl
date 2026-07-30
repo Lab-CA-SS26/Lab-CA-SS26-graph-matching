@@ -16,6 +16,13 @@ function main()
     ϵ_λ_p = config["dataInput"]["epsilon_lambda_p"] # threshold for change in P between iterations
     print_FrankWolfe = config["printing"]["print_FrankWolfe"]   # whether to print FrankWolfe's output or not
 =#
+    ϵ_λ_f=0.5
+    ϵ_λ_p=0.5
+    solveQAP=true
+    return_log=true
+    return_dataPoints=true
+    verbose=false
+    verbose_FW=false
 
     qapLib_example_list = [
         "Chr12c",
@@ -46,12 +53,12 @@ function main()
         G = readdlm(m2_file)
         H = readdlm(m1_file)
 
-        p_opt, log_string, dataPoints = pathAlgorithm(G, H, 0.2, 0.2; 
-            solveQAP=true,
-            return_log=true,
-            return_dataPoints=false,
-            verbose=false,
-            verbose_FW=false
+        p_opt, log_string, dataPoints = pathAlgorithm(G, H, ϵ_λ_f, ϵ_λ_p; 
+            solveQAP=solveQAP,
+            return_log=return_log,
+            return_dataPoints=return_dataPoints,
+            verbose=verbose,
+            verbose_FW=verbose_FW
         )
         
         println("-"^30)
@@ -65,7 +72,6 @@ function main()
         p_opt_qap = Matrix(Permutation(p_opt_qap))
         push!(optVals, GraphMatchingUtils.qapVal(p_opt_qap, G, H))
         push!(algVals, GraphMatchingUtils.qapVal(p_opt, G, H))
-        println(optVals)
         println("MIN       ALG")
         println(last(optVals), "       " , last(algVals))
         timestamp = Dates.format(now(), "yyyy-mm-dd_HH-MM-SS")
@@ -73,7 +79,14 @@ function main()
         write(results_filename, log_string)
 
         # plotAll(dataPoints.λ_list, dataPoints.f0_list, dataPoints.f1_list, dataPoints.fλ_list, "$(qapLib_example) ϵλf=$(ϵ_λ_f) ϵλp=$(ϵ_λ_p) $(solveQAP ? "QAP" : "GM")")
-    
+        dataPoints_filename = "$(results_filename)_dataPoints"
+        if dataPoints !== nothing
+            header = ["lambda" "f0" "f1" "fla"]
+            data = [dataPoints.λ_list dataPoints.f0_list dataPoints.f1_list dataPoints.fλ_list]
+            matrix = [header; data]
+            writedlm(dataPoints_filename, matrix, '\t')
+        end
+
         println("")
         println("NAME           MIN         ALG")
         for i in 1:length(optVals)
