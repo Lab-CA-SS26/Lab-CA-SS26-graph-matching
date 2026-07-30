@@ -325,8 +325,8 @@ module GraphMatchingUtils
                 max_iteration = 10_000,
                 verbose = verbose_FW
             )
-            p_change_normalized = norm(p_new - p_opt) / sqrt(2 * m_size)
         end
+        p_change_normalized = norm(p_new - p_opt) / sqrt(2 * m_size)
 
         # d_λ is halved until both values are smaller than their thresholds (or dλ is already at minimum)
         while (abs(fλNormalized(p_new,λ_new,G,H)-fλNormalized(p_opt,λ,G,H)) > ϵ_λ_f   ||   p_change_normalized > ϵ_λ_p)   &&   dλ > dλ_min
