@@ -9,12 +9,13 @@ using LinearAlgebra, Permutations
 using FrankWolfe
 
 function main()
-    # read input and configurations from config.toml (input example given in config.template.toml)
+    #= read input and configurations from config.toml (input example given in config.template.toml)
     config = TOML.parsefile("config.toml")
     solveQAP = config["dataInput"]["solveQAP"]  # if true, the QAP is solved instead of the graph matching problem
     ϵ_λ_f = config["dataInput"]["epsilon_lambda_f"] # threshold for change in Fλ between iterations
     ϵ_λ_p = config["dataInput"]["epsilon_lambda_p"] # threshold for change in P between iterations
     print_FrankWolfe = config["printing"]["print_FrankWolfe"]   # whether to print FrankWolfe's output or not
+=#
 
     qapLib_example_list = [
         "Chr12c",
@@ -45,12 +46,12 @@ function main()
         G = readdlm(m2_file)
         H = readdlm(m1_file)
 
-        p_opt, log_string, dataPoints = pathAlgorithm(G, H, ϵ_λ_f, ϵ_λ_p; 
-            solveQAP=solveQAP,
+        p_opt, log_string, dataPoints = pathAlgorithm(G, H, 0.2, 0.2; 
+            solveQAP=true,
             return_log=true,
             return_dataPoints=false,
-            verbose=true,
-            verbose_FW=print_FrankWolfe
+            verbose=false,
+            verbose_FW=false
         )
         
         println("-"^30)
