@@ -178,21 +178,14 @@ module GraphMatchingUtils
     )
     # if graphs have different sizes extend the smaller one by zero rows and columns (as stated in the paper)
     diffSize = size(G,1)-size(H,1)
-    if verbose
-        if diffSize > 0
-            println("G is larger than H by ", diffSize, " rows and columns")
-            println("Adding ", diffSize, " rows and columns of zeros to H")
-        elseif diffSize < 0
-            println("H is larger than G by ", abs(diffSize), " rows and columns")
-            println("Adding ", abs(diffSize), " rows and columns of zeros to G")
-        end
-    end
 
     if diffSize > 0
-        # G is greater
+        # G is larger
+        verbose && println("G is larger than H by ", diffSize, " rows and columns. Adding zeros to H.")
         H = cat(H,zeros(diffSize,diffSize); dims=(1,2))
     elseif diffSize < 0
-        # H is greater
+        # H is larger
+        verbose && println("H is larger than G by ", abs(diffSize), " rows and columns. Adding zeros to G.")
         diffSize = abs(diffSize)
         G = cat(G,zeros(diffSize,diffSize); dims=(1,2))
     end
