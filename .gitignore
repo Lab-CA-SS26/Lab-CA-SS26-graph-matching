@@ -1,5 +1,3 @@
 config.toml
-/QapLib
-/Results
 /testing
 TestingUtils.jl

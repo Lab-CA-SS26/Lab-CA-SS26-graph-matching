@@ -79,66 +79,6 @@ function main()
             println(qapLib_example_list[i], "       " ,optVals[i], "       ", algVals[i])
         end
     end
-    
-    
-    
-    #=
-    # save results to file
-    open(results_filename, "w") do io
-        println(io, "Timestamp: $(timestamp)")
-        println(io)
-        println(io, "="^60)
-        println(io, "Results for graph matching/QAP problem")
-        println(io, "="^60)
-        println(io)
-        println(io, "QapLib file: $(qapLib_example)")
-        println(io, "ϵ_λ_f: $(ϵ_λ_f)")
-        println(io, "ϵ_λ_p: $(ϵ_λ_p)")
-        println(io, "solveQAP: $(solveQAP)")
-        println(io)
-        println(io, "Runtime: $(elapsed_time) seconds")
-        println(io, "λ Iterations: $(count_iter)")
-        println(io)
-        if !solveQAP
-            println(io, "Cost at start:")
-            println(io, "F0: $(f0(p_start, G, H))")
-            println(io, "F1: $(f1(p_start, G, H))")
-            println(io)
-            println(io, "Cost at end:")
-            println(io, "F0: $(f0(p_opt, G, H))")
-            println(io, "F1: $(f1(p_opt, G, H))")
-        else
-            println(io, "Value of QAP")
-            println(io, "$(GraphMatchingUtils.qapVal(p_opt, G, H))")
-            println(io, "Optimal: $(GraphMatchingUtils.qapVal(p_opt_qap, G, H))")
-        end
-        println(io)
-        println(io, "-"^60)
-        println(io, "Resulting Matrix P")
-        println(io, "-"^60)
-        println(io)
-        show(io, "text/plain", two_row(Permutation(p_opt)))
-        if solveQAP
-            println(io)
-            println(io, "-"^60)
-            println(io, "Optimal Matrix P")
-            println(io, "-"^60)
-            println(io)
-            show(io, "text/plain", two_row(Permutation(p_opt_qap)))
-        end
-    end
-    println("Results saved")
-
-    if !solveQAP
-        plotTitle = "$(qapLib_example) ϵλf=$(ϵ_λ_f) ϵλp=$(ϵ_λ_p) GM"
-    else
-        plotTitle = "$(qapLib_example) ϵλf=$(ϵ_λ_f) ϵλp=$(ϵ_λ_p) QAP"
-    end
-    plotAll(λ_list, f0_list, f1_list, fλ_list, plotTitle)
-
-    println("END")
-    println("-----------------------")
-    =#
 end
 
 main()
