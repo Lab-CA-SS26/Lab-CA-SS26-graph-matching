@@ -174,6 +174,7 @@ module GraphMatchingUtils
     dλ_min::Float64=1.0e-5,
     solveQAP::Bool=false,
     return_log::Bool=false,
+    return_dataPoints::Bool=false,
     verbose::Bool=false,
     verbose_FW::Bool=false
    )
@@ -240,10 +241,17 @@ module GraphMatchingUtils
     end
     
     count_iter = 0
-    λ_list = [λ]
-    f0_list = [f0(p_opt,G,H)]
-    f1_list = [f1(p_opt,G,H)]
-    fλ_list = [fλ(p_opt,λ,G,H)]
+    
+        λ_list = Float64[]
+        f0_list = Float64[]
+        f1_list = Float64[]
+        fλ_list = Float64[]
+    if return_dataPoints
+        push!(λ_list, λ)
+        push!(f0_list, f0(p_opt,G,H))
+        push!(f1_list, f1(p_opt,G,H))
+        push!(fλ_list, fλ(p_opt,λ,G,H))
+    end
 
     verbose && println("λ = ", λ)
     verbose && println()
@@ -348,10 +356,12 @@ module GraphMatchingUtils
 
         p_opt = p_new
 
-        push!(λ_list, λ)
-        push!(f0_list, f0(p_opt,G,H))
-        push!(f1_list, f1(p_opt,G,H))
-        push!(fλ_list, fλ(p_opt,λ,G,H))
+        if return_dataPoints
+            push!(λ_list, λ)
+            push!(f0_list, f0(p_opt,G,H))
+            push!(f1_list, f1(p_opt,G,H))
+            push!(fλ_list, fλ(p_opt,λ,G,H))
+        end
 
         # stop immediately if FrankWolfe arrives at a Permutationmatrix as this is a feasible minimum
         if GraphMatchingUtils.isPerm(p_opt)
@@ -365,9 +375,9 @@ module GraphMatchingUtils
     elapsed_time = time() - t1
     verbose && println("Elapsed time: ", elapsed_time, " seconds")
 
+    
+    global log_stream = IOBuffer()
     if return_log
-        global log_stream = IOBuffer()
-
         function write_log(msg)
             println(log_stream, msg) # Schreibt in den Buffer
         end
@@ -395,16 +405,17 @@ module GraphMatchingUtils
         write_log("Resulting Matrix P")
         write_log("-"^60)
         write_log(p_vec)
-
-        global log_string = String(take!(log_stream))
     end
+    log_string = return_log ? String(take!(log_stream)) : nothing
 
-    if return_log
-        return p_vec, log_string
-    else
-        return p_vec
-    end
-    return p_vec
+    dataPoints = return_dataPoints ? (;
+            λ_list = λ_list,
+            f0_list = f0_list,
+            f1_list = f1_list,
+            fλ_list = fλ_list
+        ) : nothing
+
+    return p_vec, log_string, dataPoints
 
    end
 
