@@ -25,7 +25,8 @@ function main()
     H = readdlm(m1_file)
     
     
-    p_opt = pathAlgorithm(G, H, ϵ_λ_f, ϵ_λ_p; solveQAP=solveQAP, verbose=true, verbose_FW=print_FrankWolfe)
+    p_opt, log_string = pathAlgorithm(G, H, ϵ_λ_f, ϵ_λ_p; 
+    solveQAP=solveQAP, return_log=true, verbose=true, verbose_FW=print_FrankWolfe)
 
     p_opt = GraphMatchingUtils.permVtM(p_opt)
     println("Solving QAP: ", solveQAP)
@@ -41,9 +42,11 @@ function main()
     display(two_row(Permutation(p_opt_qap)))
     println(GraphMatchingUtils.qapVal(p_opt_qap, G, H))
 
-    #=
+    
     timestamp = Dates.format(now(), "yyyy-mm-dd_HH-MM-SS")
     results_filename = "Results/$(timestamp)_$(qapLib_example)_$(ϵ_λ_f)_$(ϵ_λ_p)_$(solveQAP).txt"
+    write(results_filename, log_string)
+    #=
     # save results to file
     open(results_filename, "w") do io
         println(io, "Timestamp: $(timestamp)")

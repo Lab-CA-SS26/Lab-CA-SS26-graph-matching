@@ -173,9 +173,10 @@ module GraphMatchingUtils
    function pathAlgorithm(G::Matrix{Float64}, H::Matrix{Float64}, ϵ_λ_f::Float64=0.1, ϵ_λ_p::Float64=0.1;
     dλ_min::Float64=1.0e-5,
     solveQAP::Bool=false,
+    return_log::Bool=false,
     verbose::Bool=false,
     verbose_FW::Bool=false
-    )
+   )
     # if graphs have different sizes extend the smaller one by zero rows and columns (as stated in the paper)
     diffSize = size(G,1)-size(H,1)
 
@@ -356,17 +357,55 @@ module GraphMatchingUtils
         if GraphMatchingUtils.isPerm(p_opt)
             verbose && println("Found a Permutationmatrix as local optimum, stopping path-following algorithm")
             verbose && println("P:")
-            p_opt = permMtV(p_opt)
+            global p_vec = permMtV(p_opt)
             verbose && display(p_opt)
             break
         end
     end
     elapsed_time = time() - t1
-    verbose &&println("Elapsed time: ", elapsed_time, " seconds")
+    verbose && println("Elapsed time: ", elapsed_time, " seconds")
 
-    return p_opt
+    if return_log
+        global log_stream = IOBuffer()
+
+        function write_log(msg)
+            println(log_stream, msg) # Schreibt in den Buffer
+        end
+
+        write_log("="^60)
+        write_log("Results for Graph Matching/QAP")
+        write_log("="^60)
+        write_log("")
+        write_log("ϵ_λ_f: $(ϵ_λ_f)")
+        write_log("ϵ_λ_p: $(ϵ_λ_p)")
+        write_log("solveQAP: $(solveQAP)")
+        write_log("")
+        write_log("Runtime: $(elapsed_time) seconds")
+        write_log("λ Iterations: $(count_iter)")
+        write_log("")
+        write_log("Cost:")
+        if !solveQAP
+            write_log("F0: $(f0(p_opt, G, H))")
+            write_log("F1: $(f1(p_opt, G, H))")
+        else
+            write_log("$(qapVal(p_opt, G, H))")
+        end
+        write_log("")
+        write_log("-"^60)
+        write_log("Resulting Matrix P")
+        write_log("-"^60)
+        write_log(p_vec)
+
+        global log_string = String(take!(log_stream))
+    end
+
+    if return_log
+        return p_vec, log_string
+    else
+        return p_vec
+    end
+    return p_vec
 
    end
-
 
 end
