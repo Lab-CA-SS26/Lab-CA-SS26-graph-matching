@@ -242,10 +242,10 @@ module GraphMatchingUtils
     
     count_iter = 0
     
-        λ_list = Float64[]
-        f0_list = Float64[]
-        f1_list = Float64[]
-        fλ_list = Float64[]
+    λ_list = Float64[]
+    f0_list = Float64[]
+    f1_list = Float64[]
+    fλ_list = Float64[]
     if return_dataPoints
         push!(λ_list, λ)
         push!(f0_list, f0(p_opt,G,H))
