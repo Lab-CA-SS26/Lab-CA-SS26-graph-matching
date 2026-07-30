@@ -19,208 +19,17 @@ function main()
     ϵ_λ_p = config["dataInput"]["epsilon_lambda_p"] # threshold for change in P between iterations
     print_FrankWolfe = config["printing"]["print_FrankWolfe"]   # whether to print FrankWolfe's output or not
 
-    println("-----------------------")
-    println("START")
     
     # read matrices G and H
     G = readdlm(m2_file)
     H = readdlm(m1_file)
     
-    # if graphs have different sizes extend the smaller one by zero rows and columns (as stated in the paper)
-    diffSize = size(G,1)-size(H,1)
-    if diffSize > 0
-        # G is greater
-        H = cat(H,zeros(diffSize,diffSize); dims=(1,2))
-    elseif diffSize < 0
-        # H is greater
-        diffSize = abs(diffSize)
-        G = cat(G,zeros(diffSize,diffSize); dims=(1,2))
-    end
-    m_size = size(G,1)
     
-    println("G:")
-    display(G)
-    println("H:")
-    display(H)
-    
-    println("Start timer")
-    t1 = time()
-    
-    # allocate fixed space for the gradient matrices so that they don't allocate new space in each calculation
-    storage0 = Matrix{Float64}(undef, m_size, m_size)
-    storage1 = Matrix{Float64}(undef, m_size, m_size)
+    p_opt = pathAlgorithm(G, H, ϵ_λ_f, ϵ_λ_p; solveQAP=solveQAP, verbose=true, verbose_FW=print_FrankWolfe)
 
-    # Start with P as the identity matrix
-    p_start = Matrix(1.0I, m_size, m_size)
-    lmo = FrankWolfe.BirkhoffPolytopeLMO() #via Hungarian algorithm
-
-
-    # find initial minimum of F0 (F1 for QAP)
-    # TODO use Newton instead of FrankWolfe for initialization as stated in paper's implementation details
-    if !solveQAP
-        init_f   = FλForP(0.0, G, H)
-        init_∇!  = ∇FλForP!(storage0, storage1, 0.0, G, H)
-    else
-        init_f   = FλForP_QAP(0.0, G, H)
-        init_∇!  = ∇FλForP_QAP!(storage0, storage1, 0.0, G, H)
-    end
-    
-    global p_opt, _ = FrankWolfe.frank_wolfe(
-    init_f, init_∇!, lmo, p_start;
-    epsilon = 1e-8,
-    max_iteration = 10_000,
-    verbose=print_FrankWolfe
-    )
-
-    # dλ_min is minimum possible change in λ between iterations as stated in the paper
-    global dλ_min = 1.0e-05
-    # change in λ is dynamically adjusted; starts at minimum
-    global dλ = dλ_min
-    # begin with λ=0; iteratively increase up until 1
-    global λ = 0.0
-    
-    # redefine f0, f1 and fλ depending on whether the QAP should be solved or not, s.t. f0 is always convex and f1 is always concave.
-    if !solveQAP
-        f0Normalized = GraphMatchingUtils.f0Normalized
-        f1Normalized = GraphMatchingUtils.f1Normalized
-        fλNormalized = GraphMatchingUtils.fλNormalized
-    else
-        f0Normalized = (P, G, H) -> -GraphMatchingUtils.f1Normalized(P, G, H)
-        f1Normalized = (P, G, H) -> -GraphMatchingUtils.f0Normalized(P, G, H)
-        fλNormalized = GraphMatchingUtils.fλ_QAP
-    end
-    
-    count_iter = 0
-    λ_list = [λ]
-    f0_list = [f0(p_opt,G,H)]
-    f1_list = [f1(p_opt,G,H)]
-    fλ_list = [fλ(p_opt,λ,G,H)]
-
-    while(λ < 1.0)
-        count_iter += 1
-        # set first possible value for λ_new
-        local λ_new = λ + dλ
-
-        # calculate local optimum w.r.t. initial λ_new
-        if !solveQAP
-            fλ_new_minimize = FλForP(λ_new, G, H)
-            ∇fλ_new_minimize = ∇FλForP!(storage0, storage1, λ_new, G, H)
-        else
-            fλ_new_minimize = FλForP_QAP(λ_new, G, H)
-            ∇fλ_new_minimize = ∇FλForP_QAP!(storage0, storage1, λ_new, G, H)
-        end
-        p_new, _ = frank_wolfe(
-            fλ_new_minimize, ∇fλ_new_minimize, lmo, p_opt; 
-            epsilon = 1e-8,
-            max_iteration = 10_000,
-            verbose=print_FrankWolfe
-        )
-        p_change_normalized = norm(p_new - p_opt) / sqrt(2 * m_size)
-
-        p_last::Union{Nothing, Matrix{Float64}} = nothing
-
-        # update dλ until criterion is met
-        # TODO implemented new stopping criterion. Need to still find out ϵ_f and ϵ_p values from FrankWolfe implementation and calculate ϵ_λ_f and ϵ_λ_p with added input M.
-        # d_λ is doubled until one value is larger than it's threshold (or new λ is already 1)
-        while abs(fλNormalized(p_new,λ_new,G,H)-fλNormalized(p_opt,λ,G,H)) < ϵ_λ_f   &&   p_change_normalized < ϵ_λ_p   &&   λ_new < one(Float64)
-            global dλ = 2*dλ
-            λ_new = min(λ + dλ, one(Float64))
-            println("dλ = ", dλ)
-
-            if !solveQAP
-                fλ_new_minimize = FλForP(λ_new, G, H)
-                ∇fλ_new_minimize = ∇FλForP!(storage0, storage1, λ_new, G, H)
-            else
-                fλ_new_minimize = FλForP_QAP(λ_new, G, H)
-                ∇fλ_new_minimize = ∇FλForP_QAP!(storage0, storage1, λ_new, G, H)
-            end
-            p_last = p_new
-            p_new, _ = frank_wolfe(
-                fλ_new_minimize, ∇fλ_new_minimize, lmo, p_opt; 
-                epsilon = 1e-8,
-                max_iteration = 10_000,
-                verbose = print_FrankWolfe
-            )
-            p_change_normalized = norm(p_new - p_opt) / sqrt(2 * m_size)
-        end
-        
-        # if the last while loop's condition is not met (anymore), dλ is one step too large and can be halved once directly
-        global dλ = max(dλ/2,dλ_min)
-        λ_new = λ + dλ
-        println("dλ = ", dλ)
-        if !isnothing(p_last)
-            p_new = p_last
-        else
-            if !solveQAP
-                fλ_new_minimize = FλForP(λ_new, G, H)
-                ∇fλ_new_minimize = ∇FλForP!(storage0, storage1, λ_new, G, H)
-            else
-                fλ_new_minimize = FλForP_QAP(λ_new, G, H)
-                ∇fλ_new_minimize = ∇FλForP_QAP!(storage0, storage1, λ_new, G, H)
-            end
-            p_new, _ = frank_wolfe(
-                fλ_new_minimize, ∇fλ_new_minimize, lmo, p_opt; 
-                epsilon = 1e-8,
-                max_iteration = 10_000,
-                verbose = print_FrankWolfe
-            )
-            p_change_normalized = norm(p_new - p_opt) / sqrt(2 * m_size)
-        end
-
-        # d_λ is halved until both values are smaller than their thresholds (or dλ is already at minimum)
-        while (abs(fλNormalized(p_new,λ_new,G,H)-fλNormalized(p_opt,λ,G,H)) > ϵ_λ_f   ||   p_change_normalized > ϵ_λ_p)   &&   dλ > dλ_min
-            global dλ = max(dλ/2,dλ_min)
-            λ_new = min(λ + dλ, one(Float64))
-            println("dλ = ", dλ)
-
-            if !solveQAP
-                fλ_new_minimize = FλForP(λ_new, G, H)
-                ∇fλ_new_minimize = ∇FλForP!(storage0, storage1, λ_new, G, H)
-            else
-                fλ_new_minimize = FλForP_QAP(λ_new, G, H)
-                ∇fλ_new_minimize = ∇FλForP_QAP!(storage0, storage1, λ_new, G, H)
-            end
-            p_new, _ = frank_wolfe(
-                fλ_new_minimize, ∇fλ_new_minimize, lmo, p_opt; 
-                epsilon = 1e-8,
-                max_iteration = 10_000,
-                verbose = print_FrankWolfe
-            )
-            p_change_normalized = norm(p_new - p_opt) / sqrt(2 * m_size)
-        end
-        println("λ: ",λ," + ",dλ," = ",λ_new)
-        global λ = λ_new
-        # criterion is met, λ is set correctly and p_new contans the local optimum w.r.t. the new λ. Set p_opt to p_new for next iteration.
-
-        p_opt = p_new
-
-        push!(λ_list, λ)
-        push!(f0_list, f0(p_opt,G,H))
-        push!(f1_list, f1(p_opt,G,H))
-        push!(fλ_list, fλ(p_opt,λ,G,H))
-
-        # stop immediately if FrankWolfe arrives at a Permutationmatrix as this is a feasible minimum
-        if GraphMatchingUtils.isPerm(p_opt)
-            println("DONE")
-            println("P:")
-            display(two_row(Permutation(p_opt)))
-            println("Inv(P)")
-            display(two_row(inv(Permutation(p_opt))))
-            break
-        else
-            # println("P:")
-            # display(p_opt)
-            println("CONTINUE")
-        end
-    end
-    elapsed_time = time() - t1
-    println("Elapsed time: ", elapsed_time, " seconds")
-
+    p_opt = GraphMatchingUtils.permVtM(p_opt)
     println("Solving QAP: ", solveQAP)
-    println("Cost at start:")
-    println("F0: ", f0(p_start, G, H))
-    println("F1: ", f1(p_start, G, H))
-    println("Cost at end:")
+    println("Cost:")
     println("F0: ", f0(p_opt, G, H))
     println("F1: ", f1(p_opt, G, H))
     println("Value of QAP")
@@ -232,6 +41,7 @@ function main()
     display(two_row(Permutation(p_opt_qap)))
     println(GraphMatchingUtils.qapVal(p_opt_qap, G, H))
 
+    #=
     timestamp = Dates.format(now(), "yyyy-mm-dd_HH-MM-SS")
     results_filename = "Results/$(timestamp)_$(qapLib_example)_$(ϵ_λ_f)_$(ϵ_λ_p)_$(solveQAP).txt"
     # save results to file
@@ -289,6 +99,7 @@ function main()
 
     println("END")
     println("-----------------------")
+    =#
 end
 
 main()
