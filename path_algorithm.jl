@@ -21,7 +21,7 @@ function main()
     solveQAP=true
     return_log=true
     return_dataPoints=true
-    verbose=false
+    verbose=true
     verbose_FW=false
 
     qapLib_example_list = [
