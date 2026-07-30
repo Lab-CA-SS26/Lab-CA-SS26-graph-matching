@@ -18,7 +18,7 @@ function main()
 
     qapLib_example_list = [
         "Chr12c",
-        #="Chr15a",
+        "Chr15a",
         "Chr15c",
         "Chr20b",
         "Chr22b",
@@ -31,7 +31,7 @@ function main()
         "Tai20a",
         "Tai30a",
         "Tai35a",
-        "Tai40a"=#
+        "Tai40a"
     ]
 
     optVals = []

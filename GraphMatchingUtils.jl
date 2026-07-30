@@ -260,7 +260,6 @@ module GraphMatchingUtils
         # set first possible value for λ_new
         local λ_new = λ + dλ
 
-        verbose && println("   Testing:")
         # calculate local optimum w.r.t. initial λ_new
         verbose && println("   dλ = ", dλ)
         if !solveQAP
@@ -368,7 +367,7 @@ module GraphMatchingUtils
             verbose && println("Found a Permutationmatrix as local optimum, stopping path-following algorithm")
             verbose && println("P:")
             global p_vec = permMtV(p_opt)
-            verbose && display(p_opt)
+            verbose && display(p_vec)
             break
         end
     end
