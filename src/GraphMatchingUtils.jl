@@ -1,7 +1,5 @@
 module GraphMatchingUtils
     using LinearAlgebra, FrankWolfe
-    export isPerm, sqd_frob, f0, f0Normalized, ∇f0Normalized!, f1, f1Normalized, ∇f1Normalized!, fλ, fλNormalized, fλ_QAP, ∇fλ!, ∇fλ_QAP!, qapVal
-    export FλForP, ∇FλForP!, FλForP_QAP, ∇FλForP_QAP!
     export pathAlgorithm
 
 
