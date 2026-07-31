@@ -1,4 +1,4 @@
-includet("GraphMatchingUtils.jl")
+include("GraphMatchingUtils.jl")
 using .GraphMatchingUtils
 #includet("TestingUtils.jl")
 #using .TestingUtils
