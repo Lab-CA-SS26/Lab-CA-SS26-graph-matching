@@ -16,8 +16,8 @@ function main()
     ϵ_λ_p = config["dataInput"]["epsilon_lambda_p"] # threshold for change in P between iterations
     print_FrankWolfe = config["printing"]["print_FrankWolfe"]   # whether to print FrankWolfe's output or not
 =#
-    ϵ_λ_f=0.1
-    ϵ_λ_p=0.1
+    ϵ_λ_f=0.5
+    ϵ_λ_p=0.5
     solveQAP=true
     return_log=true
     return_dataPoints=true
@@ -25,7 +25,7 @@ function main()
     verbose_FW=false
 
     qapLib_example_list = [
-        "Chr12c",
+        #="Chr12c",
         "Chr15a",
         "Chr15c",
         "Chr20b",
@@ -38,7 +38,7 @@ function main()
         "Tai17a",
         "Tai20a",
         "Tai30a",
-        "Tai35a",
+        "Tai35a",=#
         "Tai40a"
     ]
 
