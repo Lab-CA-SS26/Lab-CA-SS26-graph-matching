@@ -16,8 +16,8 @@ function main()
     ϵ_λ_p = config["dataInput"]["epsilon_lambda_p"] # threshold for change in P between iterations
     print_FrankWolfe = config["printing"]["print_FrankWolfe"]   # whether to print FrankWolfe's output or not
 =#
-    ϵ_λ_f=0.5
-    ϵ_λ_p=0.5
+    ϵ_λ_f=0.1
+    ϵ_λ_p=0.1
     solveQAP=true
     return_log=true
     return_dataPoints=true
