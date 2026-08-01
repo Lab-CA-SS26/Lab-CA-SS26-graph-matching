@@ -1,4 +1,4 @@
-include("GraphMatchingUtils.jl")
+include("src/GraphMatchingUtils.jl")
 using .GraphMatchingUtils
 using TOML
 using DataFrames, CSV, DelimitedFiles, Dates
@@ -15,7 +15,7 @@ function main()
     verbose_FW=false
 
     qapLib_example_list = [
-        #="Chr12c",
+        "Chr12c",
         "Chr15a",
         "Chr15c",
         "Chr20b",
@@ -28,7 +28,7 @@ function main()
         "Tai17a",
         "Tai20a",
         "Tai30a",
-        "Tai35a",=#
+        "Tai35a",
         "Tai40a"
     ]
     
@@ -43,7 +43,7 @@ function main()
         G = readdlm(m2_file)
         H = readdlm(m1_file)
 
-        p_opt, log_string, dataPoints = pathAlgorithm(G, H, ϵ_λ_f, ϵ_λ_p; 
+        p_opt, log_string, dataPoints = GraphMatchingUtils.pathAlgorithm(G, H, ϵ_λ_f, ϵ_λ_p; 
             solveQAP=solveQAP,
             return_log=return_log,
             return_dataPoints=return_dataPoints,
@@ -55,8 +55,8 @@ function main()
         p_opt = GraphMatchingUtils.permVtM(p_opt)
         println("Solving QAP: ", solveQAP)
         println("GM Cost:")
-        println("F0: ", f0(p_opt, G, H))
-        println("F1: ", f1(p_opt, G, H))
+        println("F0: ", GraphMatchingUtils.f0(p_opt, G, H))
+        println("F1: ", GraphMatchingUtils.f1(p_opt, G, H))
         p_opt_qap = readdlm("QapLib/$(qapLib_example)Opt.csv", Int64)
         p_opt_qap = vec(p_opt_qap)
         p_opt_qap = Matrix(Permutation(p_opt_qap))
@@ -82,6 +82,7 @@ function main()
         for i in 1:length(optVals)
             println(qapLib_example_list[i], "       " ,optVals[i], "       ", algVals[i])
         end
+        return # TODO remove
     end
 end
 
