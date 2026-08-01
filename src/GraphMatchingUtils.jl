@@ -3,172 +3,7 @@ module GraphMatchingUtils
     export pathAlgorithm
 
 
-   # returns true if P contains only zeros and ones and false if not
-   function isPerm(P)
-    return all(x -> x == 0.0 || x == 1.0, P)
-   end
-
-   function permMtV(P)
-    return [argmax(row) for row in eachrow(P)]
-   end
-
-   function permVtM(P)
-    return Matrix{Float64}(I(length(P))[P, :])
-    end
-
-   # returns the squared frobenius norm of matrix A
-   function sqd_frob(A)
-    val = norm(A,2)
-    return val^2
-   end
-
-   # returns the diagonal degree matrix of G
-   # column by column is quicker to go through in julia
-   function diagonal_degree(G)
-    D = zeros(size(G))
-    for j = 1:size(D,1)
-        sum = 0.0
-        for i = 1:size(D,1)
-            sum += G[i, j]
-        end
-        D[j, j] = sum
-    end
-    return D
-   end
-
-   # returns the matrix Δ as stated in the paper
-   function Δ(G,H)
-    D_G = diagonal_degree(G)
-    D_H = diagonal_degree(H)
-
-    Δ_G_H = zeros(size(G))
-    for i = 1:size(G,1)
-        for j = 1:size(G,1)
-            Δ_G_H[i, j] = D_H[j, j] - D_G[i, i]
-        end
-    end
-    return Δ_G_H .^ 2
-   end
-
-   # returns the laplacian matrix of G
-   function laplacian(G)
-    return diagonal_degree(G) .- G
-   end
-
-   # function F0 as stated in the paper.
-   # algorithm uses only normalized version. This is just for plotting and displaying the correct data.
-   function f0(P,G,H)
-    return sqd_frob(G*P .- P*H)
-   end
-
-   # F0 normalized for values between 0 and 1.
-   function f0Normalized(P,G,H)
-    value = f0(P,G,H)
-    return value ./ (sqd_frob(G) + sqd_frob(H))
-   end
-
-   # gradient of F0 as stated in the paper but normalized for values between 0 and 1
-   # save solution value in variable "storage" for space economy
-   function ∇f0Normalized!(storage, P, G, H)
-        value = 2.0 .* ((G^2) * P .- 2.0 .* G * P * H .+ P * (H^2))
-        storage .= value ./ (sqd_frob(G) + sqd_frob(H))
-   end
-
-   # function F1 as stated in the paper.
-   # algorithm uses only normalized version. This is just for plotting and displaying the correct data.
-   function f1(P, G, H)
-    constantTerm = tr(GraphMatchingUtils.laplacian(G)^2)+tr(GraphMatchingUtils.laplacian(H)^2)
-    return .- tr(Δ(G,H)'*P) .- 2.0 .* (vec(P)' * vec(laplacian(G) * P * laplacian(H))) + constantTerm
-   end
-
-   # f1 normalized for values between 0 and 1.
-   function f1Normalized(P, G, H)
-    value = f1(P, G, H)
-    return value ./ (sqd_frob(G) + sqd_frob(H))
-   end
-
-   # gradient of F1 as stated in the paper but normalized for values between 0 and 1
-   # save solution value in variable "storage" for space economy
-   function ∇f1Normalized!(storage, P, G, H)
-    value = .- Δ(G,H)' .- 4.0 .* laplacian(G) * P * laplacian(H)
-    storage .= value ./ (sqd_frob(G) + sqd_frob(H))
-   end
-   
-   # function Fλ as stated in the paper.
-   # algorithm uses only normalized version. This is just for plotting and displaying the correct data.
-   function fλ(P, λ, G, H)
-    return (1-λ) * GraphMatchingUtils.f0(P, G, H)  +  λ * GraphMatchingUtils.f1(P, G, H)
-   end
-
-   function fλNormalized(P, λ, G, H)
-    return (1-λ) * GraphMatchingUtils.f0Normalized(P, G, H)  +  λ * GraphMatchingUtils.f1Normalized(P, G, H)
-   end
-
-    struct FλForP
-        λ::Float64
-        G::Matrix{Float64}
-        H::Matrix{Float64}
-    end
-    function(fλ_struct::FλForP)(P) 
-        return fλNormalized(P, fλ_struct.λ, fλ_struct.G, fλ_struct.H)
-    end
-
-    # function flipped for maximization and solving QAP
-   function fλ_QAP(P, λ, G, H)
-    return (1-λ) * (-GraphMatchingUtils.f1Normalized(P, G, H))  +  λ * (-GraphMatchingUtils.f0Normalized(P, G, H))
-   end
-
-    struct FλForP_QAP
-        λ::Float64
-        G::Matrix{Float64}
-        H::Matrix{Float64}
-    end
-    function(fλ_struct::FλForP_QAP)(P) 
-        return fλ_QAP(P, fλ_struct.λ, fλ_struct.G, fλ_struct.H)
-    end
-
-   # gradient of F1 as stated in the paper
-   # save solution value in variable "storage" for space economy
-   function ∇fλ!(storageλ, storage0, storage1, P, λ, G, H)
-    GraphMatchingUtils.∇f0Normalized!(storage0, P, G, H)
-    GraphMatchingUtils.∇f1Normalized!(storage1, P, G, H)
-    storageλ .= (1.0-λ) .* storage0 .+ λ .* storage1
-   end
-   struct ∇FλForP!
-        storage0::Matrix{Float64}
-        storage1::Matrix{Float64}
-        λ::Float64
-        G::Matrix{Float64}
-        H::Matrix{Float64}
-    end
-    function(∇fλ_struct::∇FλForP!)(storageλ, P)
-        ∇fλ!(storageλ, ∇fλ_struct.storage0, ∇fλ_struct.storage1, P, ∇fλ_struct.λ, ∇fλ_struct.G, ∇fλ_struct.H)
-    end
-
-   # gradient flipped for maximization and solving QAP
-   # save solution value in variable "storage" for space economy
-   function ∇fλ_QAP!(storageλ, storage0, storage1, P, λ, G, H)
-    GraphMatchingUtils.∇f0Normalized!(storage0, P, G, H)
-    GraphMatchingUtils.∇f1Normalized!(storage1, P, G, H)
-    storageλ .= (1.0-λ) .* (-storage1) .+ λ .* (-storage0)
-   end
-
-   struct ∇FλForP_QAP!
-        storage0::Matrix{Float64}
-        storage1::Matrix{Float64}
-        λ::Float64
-        G::Matrix{Float64}
-        H::Matrix{Float64}
-    end
-    function(∇fλ_struct::∇FλForP_QAP!)(storageλ, P)
-        ∇fλ_QAP!(storageλ, ∇fλ_struct.storage0, ∇fλ_struct.storage1, P, ∇fλ_struct.λ, ∇fλ_struct.G, ∇fλ_struct.H)
-    end
-
-   function qapVal(P,G,H)
-    return tr(G*P*H'*P')
-   end
-
-   function pathAlgorithm(G::Matrix{Float64}, H::Matrix{Float64}, ϵ_λ_f::Float64=0.1, ϵ_λ_p::Float64=0.1;
+    function pathAlgorithm(G::Matrix{Float64}, H::Matrix{Float64}, ϵ_λ_f::Float64=0.1, ϵ_λ_p::Float64=0.1;
     dλ_min::Float64=1.0e-5,
     solveQAP::Bool=false,
     return_log::Bool=false,
@@ -415,6 +250,171 @@ module GraphMatchingUtils
 
     return p_vec, log_string, dataPoints
 
+   end
+
+   # returns true if P contains only zeros and ones and false if not
+   function isPerm(P)
+    return all(x -> x == 0.0 || x == 1.0, P)
+   end
+
+   function permMtV(P)
+    return [argmax(row) for row in eachrow(P)]
+   end
+
+   function permVtM(P)
+    return Matrix{Float64}(I(length(P))[P, :])
+    end
+
+   # returns the squared frobenius norm of matrix A
+   function sqd_frob(A)
+    val = norm(A,2)
+    return val^2
+   end
+
+   # returns the diagonal degree matrix of G
+   # column by column is quicker to go through in julia
+   function diagonal_degree(G)
+    D = zeros(size(G))
+    for j = 1:size(D,1)
+        sum = 0.0
+        for i = 1:size(D,1)
+            sum += G[i, j]
+        end
+        D[j, j] = sum
+    end
+    return D
+   end
+
+   # returns the matrix Δ as stated in the paper
+   function Δ(G,H)
+    D_G = diagonal_degree(G)
+    D_H = diagonal_degree(H)
+
+    Δ_G_H = zeros(size(G))
+    for i = 1:size(G,1)
+        for j = 1:size(G,1)
+            Δ_G_H[i, j] = D_H[j, j] - D_G[i, i]
+        end
+    end
+    return Δ_G_H .^ 2
+   end
+
+   # returns the laplacian matrix of G
+   function laplacian(G)
+    return diagonal_degree(G) .- G
+   end
+
+   # function F0 as stated in the paper.
+   # algorithm uses only normalized version. This is just for plotting and displaying the correct data.
+   function f0(P,G,H)
+    return sqd_frob(G*P .- P*H)
+   end
+
+   # F0 normalized for values between 0 and 1.
+   function f0Normalized(P,G,H)
+    value = f0(P,G,H)
+    return value ./ (sqd_frob(G) + sqd_frob(H))
+   end
+
+   # gradient of F0 as stated in the paper but normalized for values between 0 and 1
+   # save solution value in variable "storage" for space economy
+   function ∇f0Normalized!(storage, P, G, H)
+        value = 2.0 .* ((G^2) * P .- 2.0 .* G * P * H .+ P * (H^2))
+        storage .= value ./ (sqd_frob(G) + sqd_frob(H))
+   end
+
+   # function F1 as stated in the paper.
+   # algorithm uses only normalized version. This is just for plotting and displaying the correct data.
+   function f1(P, G, H)
+    constantTerm = tr(GraphMatchingUtils.laplacian(G)^2)+tr(GraphMatchingUtils.laplacian(H)^2)
+    return .- tr(Δ(G,H)'*P) .- 2.0 .* (vec(P)' * vec(laplacian(G) * P * laplacian(H))) + constantTerm
+   end
+
+   # f1 normalized for values between 0 and 1.
+   function f1Normalized(P, G, H)
+    value = f1(P, G, H)
+    return value ./ (sqd_frob(G) + sqd_frob(H))
+   end
+
+   # gradient of F1 as stated in the paper but normalized for values between 0 and 1
+   # save solution value in variable "storage" for space economy
+   function ∇f1Normalized!(storage, P, G, H)
+    value = .- Δ(G,H)' .- 4.0 .* laplacian(G) * P * laplacian(H)
+    storage .= value ./ (sqd_frob(G) + sqd_frob(H))
+   end
+   
+   # function Fλ as stated in the paper.
+   # algorithm uses only normalized version. This is just for plotting and displaying the correct data.
+   function fλ(P, λ, G, H)
+    return (1-λ) * GraphMatchingUtils.f0(P, G, H)  +  λ * GraphMatchingUtils.f1(P, G, H)
+   end
+
+   function fλNormalized(P, λ, G, H)
+    return (1-λ) * GraphMatchingUtils.f0Normalized(P, G, H)  +  λ * GraphMatchingUtils.f1Normalized(P, G, H)
+   end
+
+    struct FλForP
+        λ::Float64
+        G::Matrix{Float64}
+        H::Matrix{Float64}
+    end
+    function(fλ_struct::FλForP)(P) 
+        return fλNormalized(P, fλ_struct.λ, fλ_struct.G, fλ_struct.H)
+    end
+
+    # function flipped for maximization and solving QAP
+   function fλ_QAP(P, λ, G, H)
+    return (1-λ) * (-GraphMatchingUtils.f1Normalized(P, G, H))  +  λ * (-GraphMatchingUtils.f0Normalized(P, G, H))
+   end
+
+    struct FλForP_QAP
+        λ::Float64
+        G::Matrix{Float64}
+        H::Matrix{Float64}
+    end
+    function(fλ_struct::FλForP_QAP)(P) 
+        return fλ_QAP(P, fλ_struct.λ, fλ_struct.G, fλ_struct.H)
+    end
+
+   # gradient of F1 as stated in the paper
+   # save solution value in variable "storage" for space economy
+   function ∇fλ!(storageλ, storage0, storage1, P, λ, G, H)
+    GraphMatchingUtils.∇f0Normalized!(storage0, P, G, H)
+    GraphMatchingUtils.∇f1Normalized!(storage1, P, G, H)
+    storageλ .= (1.0-λ) .* storage0 .+ λ .* storage1
+   end
+   struct ∇FλForP!
+        storage0::Matrix{Float64}
+        storage1::Matrix{Float64}
+        λ::Float64
+        G::Matrix{Float64}
+        H::Matrix{Float64}
+    end
+    function(∇fλ_struct::∇FλForP!)(storageλ, P)
+        ∇fλ!(storageλ, ∇fλ_struct.storage0, ∇fλ_struct.storage1, P, ∇fλ_struct.λ, ∇fλ_struct.G, ∇fλ_struct.H)
+    end
+
+   # gradient flipped for maximization and solving QAP
+   # save solution value in variable "storage" for space economy
+   function ∇fλ_QAP!(storageλ, storage0, storage1, P, λ, G, H)
+    GraphMatchingUtils.∇f0Normalized!(storage0, P, G, H)
+    GraphMatchingUtils.∇f1Normalized!(storage1, P, G, H)
+    storageλ .= (1.0-λ) .* (-storage1) .+ λ .* (-storage0)
+   end
+
+   struct ∇FλForP_QAP!
+        storage0::Matrix{Float64}
+        storage1::Matrix{Float64}
+        λ::Float64
+        G::Matrix{Float64}
+        H::Matrix{Float64}
+    end
+    function(∇fλ_struct::∇FλForP_QAP!)(storageλ, P)
+        ∇fλ_QAP!(storageλ, ∇fλ_struct.storage0, ∇fλ_struct.storage1, P, ∇fλ_struct.λ, ∇fλ_struct.G, ∇fλ_struct.H)
+    end
+
+   function qapVal(P,G,H)
+    return tr(G*P*H'*P')
    end
 
 end
