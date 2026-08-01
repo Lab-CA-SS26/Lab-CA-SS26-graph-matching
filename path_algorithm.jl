@@ -1,20 +1,11 @@
 include("GraphMatchingUtils.jl")
 using .GraphMatchingUtils
-#includet("TestingUtils.jl")
-#using .TestingUtils
 using TOML
 using DataFrames, CSV, DelimitedFiles, Dates
 using LinearAlgebra, Permutations
 using FrankWolfe
 
 function main()
-    #= read input and configurations from config.toml (input example given in config.template.toml)
-    config = TOML.parsefile("config.toml")
-    solveQAP = config["dataInput"]["solveQAP"]  # if true, the QAP is solved instead of the graph matching problem
-    ϵ_λ_f = config["dataInput"]["epsilon_lambda_f"] # threshold for change in Fλ between iterations
-    ϵ_λ_p = config["dataInput"]["epsilon_lambda_p"] # threshold for change in P between iterations
-    print_FrankWolfe = config["printing"]["print_FrankWolfe"]   # whether to print FrankWolfe's output or not
-=#
     ϵ_λ_f=0.1
     ϵ_λ_p=0.1
     solveQAP=true
@@ -40,7 +31,7 @@ function main()
         "Tai35a",=#
         "Tai40a"
     ]
-
+    
     optVals = []
     algVals = []
     for qapLib_example in qapLib_example_list
@@ -78,7 +69,7 @@ function main()
         write(results_filename, log_string)
 
         # plotAll(dataPoints.λ_list, dataPoints.f0_list, dataPoints.f1_list, dataPoints.fλ_list, "$(qapLib_example) ϵλf=$(ϵ_λ_f) ϵλp=$(ϵ_λ_p) $(solveQAP ? "QAP" : "GM")")
-        dataPoints_filename = "$(results_filename)_dataPoints"
+        dataPoints_filename = "Results/$(timestamp)_$(qapLib_example)_$(ϵ_λ_f)_$(ϵ_λ_p)_$(solveQAP)_dataPoints.txt"
         if dataPoints !== nothing
             header = ["lambda" "f0" "f1" "fla"]
             data = [dataPoints.λ_list dataPoints.f0_list dataPoints.f1_list dataPoints.fλ_list]
