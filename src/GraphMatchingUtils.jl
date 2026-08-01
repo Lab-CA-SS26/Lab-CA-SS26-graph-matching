@@ -215,7 +215,7 @@ module GraphMatchingUtils
         init_∇!  = ∇FλForP_QAP!(storage0, storage1, 0.0, G, H)
     end
     
-    global p_opt, _ = FrankWolfe.frank_wolfe(
+    p_opt, _ = FrankWolfe.frank_wolfe(
     init_f, init_∇!, lmo, p_start;
     epsilon = 1e-8,
     max_iteration = 10_000,
@@ -223,9 +223,9 @@ module GraphMatchingUtils
     )
 
     # change in λ is dynamically adjusted; starts at minimum
-    global dλ = dλ_min
+    dλ = dλ_min
     # begin with λ=0; iteratively increase up until 1
-    global λ = 0.0
+    λ = 0.0
     
     # redefine f0, f1 and fλ depending on whether the QAP should be solved or not, s.t. f0 is always convex and f1 is always concave.
     if !solveQAP
@@ -256,7 +256,7 @@ module GraphMatchingUtils
     while(λ < 1.0)
         count_iter += 1
         # set first possible value for λ_new
-        local λ_new = λ + dλ
+        λ_new = λ + dλ
 
         # calculate local optimum w.r.t. initial λ_new
         verbose && println("   dλ = ", dλ)
@@ -281,7 +281,7 @@ module GraphMatchingUtils
         # TODO implemented new stopping criterion. Need to still find out ϵ_f and ϵ_p values from FrankWolfe implementation and calculate ϵ_λ_f and ϵ_λ_p with added input M.
         # d_λ is doubled until one value is larger than it's threshold (or new λ is already 1)
         while abs(fλNormalized(p_new,λ_new,G,H)-fλNormalized(p_opt,λ,G,H)) < ϵ_λ_f   &&   p_change_normalized < ϵ_λ_p   &&   λ_new < one(Float64)
-            global dλ = 2*dλ
+            dλ = 2*dλ
             λ_new = min(λ + dλ, one(Float64))
 
             verbose && println("   dλ = ", dλ)
@@ -303,7 +303,7 @@ module GraphMatchingUtils
         end
         
         # if the last while loop's condition is not met (anymore), dλ is one step too large and can be halved once directly
-        global dλ = max(dλ/2,dλ_min)
+        dλ = max(dλ/2,dλ_min)
         λ_new = λ + dλ
         verbose && println("   dλ = ", dλ)
         if !isnothing(p_last)
@@ -327,7 +327,7 @@ module GraphMatchingUtils
 
         # d_λ is halved until both values are smaller than their thresholds (or dλ is already at minimum)
         while (abs(fλNormalized(p_new,λ_new,G,H)-fλNormalized(p_opt,λ,G,H)) > ϵ_λ_f   ||   p_change_normalized > ϵ_λ_p)   &&   dλ > dλ_min
-            global dλ = max(dλ/2,dλ_min)
+            dλ = max(dλ/2,dλ_min)
             λ_new = min(λ + dλ, one(Float64))
             verbose && println("   dλ = ", dλ)
 
@@ -346,7 +346,7 @@ module GraphMatchingUtils
             )
             p_change_normalized = norm(p_new - p_opt) / sqrt(2 * m_size)
         end
-        global λ = λ_new
+        λ = λ_new
         verbose && println("λ = ", λ)
         verbose && println()
         # criterion is met, λ is set correctly and p_new contans the local optimum w.r.t. the new λ. Set p_opt to p_new for next iteration.
@@ -364,16 +364,17 @@ module GraphMatchingUtils
         if GraphMatchingUtils.isPerm(p_opt)
             verbose && println("Found a Permutationmatrix as local optimum, stopping path-following algorithm")
             verbose && println("P:")
-            global p_vec = permMtV(p_opt)
-            verbose && display(p_vec)
             break
         end
     end
+    p_vec = permMtV(p_opt)
+    verbose && display(p_vec)
+    
     elapsed_time = time() - t1
     verbose && println("Elapsed time: ", elapsed_time, " seconds")
 
     
-    global log_stream = IOBuffer()
+    log_stream = IOBuffer()
     if return_log
         function write_log(msg)
             println(log_stream, msg) # Schreibt in den Buffer

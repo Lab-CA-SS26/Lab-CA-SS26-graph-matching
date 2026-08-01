@@ -6,8 +6,8 @@ using LinearAlgebra, Permutations
 using FrankWolfe
 
 function main()
-    ϵ_λ_f=0.1
-    ϵ_λ_p=0.1
+    ϵ_λ_f=0.5
+    ϵ_λ_p=0.5
     solveQAP=true
     return_log=true
     return_dataPoints=true
