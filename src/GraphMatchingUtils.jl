@@ -2,7 +2,43 @@ module GraphMatchingUtils
     using LinearAlgebra, FrankWolfe
     export pathAlgorithm
 
+    """
+    pathAlgorithm(G::Matrix{Float64}, H::Matrix{Float64}, ϵ_λ_f::Float64=0.1, ϵ_λ_p::Float64=0.1; kwargs...)
 
+    Solve the graph matching problem (or Quadratic Assignment Problem / QAP) using a path-following algorithm.
+
+    The algorithm tracks a convex combination (via parameter λ ∈ [0, 1]) between an easily solvable convex relaxation and a concave function that is as hard as the problem. If input matrices differ in size, the smaller matrix is automatically padded with zero rows and columns.
+
+    # Arguments
+    - `G::Matrix{Float64}`: Adjacency or cost matrix of the first graph (n × n).
+    - `H::Matrix{Float64}`: Adjacency or cost matrix of the second graph (m × m).
+    - `ϵ_λ_f::Float64=0.1`: Threshold for the maximum normalized change in function value during dynamic step-size control of λ.
+    - `ϵ_λ_p::Float64=0.1`: Threshold for the normalized permutation matrix change (||P_{new} - P_{opt}|| / √{2n}) during step-size control.
+
+    # Keywords
+    - `dλ_min::Float64=1.0e-5`: Minimum step size for incrementing the path parameter λ.
+    - `solveQAP::Bool=false`: If `true`, adjusts sign logic to solve a general QAP.
+    - `return_log::Bool=false`: If `true`, returns a formatted summary log string (runtime, costs, and iterations).
+    - `return_dataPoints::Bool=false`: If `true`, returns a `NamedTuple` containing trace histories for λ, f_0, f_1, and f_λ.
+    - `verbose::Bool=false`: Enable detailed console output tracking path-following progress.
+    - `verbose_FW::Bool=false`: Enable console output for individual Frank-Wolfe optimization steps.
+
+    # Returns
+    - `p_vec::Vector{Int}`: Resulting permutation vector indicating node assignments.
+    - `log_string::Union{String, Nothing}`: Formatted summary string if `return_log=true`, otherwise `nothing`.
+    - `dataPoints::Union{NamedTuple, Nothing}`: `NamedTuple` containing `λ_list`, `f0_list`, `f1_list`, and `fλ_list` if `return_dataPoints=true`, otherwise `nothing`.
+
+    # Examples
+    ```jldoctest
+    julia> G = [1.0 0.0; 0.0 1.0];
+    julia> H = [0.0 1.0; 1.0 0.0];
+    julia> p_vec, log_str, _ = pathAlgorithm(G, H, 0.1, 0.1;verbose=false);
+    julia> p_vec
+    2-element Vector{Int64}:
+    2
+    1
+    ```
+    """
     function pathAlgorithm(G::Matrix{Float64}, H::Matrix{Float64}, ϵ_λ_f::Float64=0.1, ϵ_λ_p::Float64=0.1;
     dλ_min::Float64=1.0e-5,
     solveQAP::Bool=false,
