@@ -1,7 +1,7 @@
 using Test
-using GraphMatchingUtils
+using PathGraphMatching
 
-@testset "GraphMatchingUtils.jl Tests" begin
+@testset "PathGraphMatching.jl Tests" begin
     P, _, _ = pathAlgorithm([
         1.0 2.0;
         3.0 4.0

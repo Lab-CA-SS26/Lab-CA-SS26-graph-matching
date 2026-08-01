@@ -1,4 +1,4 @@
-module GraphMatchingUtils
+module PathGraphMatching
     using LinearAlgebra, FrankWolfe
     export pathAlgorithm
 
@@ -100,13 +100,13 @@ module GraphMatchingUtils
     
     # redefine f0, f1 and fλ depending on whether the QAP should be solved or not, s.t. f0 is always convex and f1 is always concave.
     if !solveQAP
-        f0Normalized = GraphMatchingUtils.f0Normalized
-        f1Normalized = GraphMatchingUtils.f1Normalized
-        fλNormalized = GraphMatchingUtils.fλNormalized
+        f0Normalized = PathGraphMatching.f0Normalized
+        f1Normalized = PathGraphMatching.f1Normalized
+        fλNormalized = PathGraphMatching.fλNormalized
     else
-        f0Normalized = (P, G, H) -> -GraphMatchingUtils.f1Normalized(P, G, H)
-        f1Normalized = (P, G, H) -> -GraphMatchingUtils.f0Normalized(P, G, H)
-        fλNormalized = GraphMatchingUtils.fλ_QAP
+        f0Normalized = (P, G, H) -> -PathGraphMatching.f1Normalized(P, G, H)
+        f1Normalized = (P, G, H) -> -PathGraphMatching.f0Normalized(P, G, H)
+        fλNormalized = PathGraphMatching.fλ_QAP
     end
     
     count_iter = 0
@@ -232,7 +232,7 @@ module GraphMatchingUtils
         end
 
         # stop immediately if FrankWolfe arrives at a Permutationmatrix as this is a feasible minimum
-        if GraphMatchingUtils.isPerm(p_opt)
+        if isPerm(p_opt)
             verbose && println("Found a Permutationmatrix as local optimum, stopping path-following algorithm")
             verbose && println("P:")
             break
@@ -362,7 +362,7 @@ module GraphMatchingUtils
    # function F1 as stated in the paper.
    # algorithm uses only normalized version. This is just for plotting and displaying the correct data.
    function f1(P, G, H)
-    constantTerm = tr(GraphMatchingUtils.laplacian(G)^2)+tr(GraphMatchingUtils.laplacian(H)^2)
+    constantTerm = tr(laplacian(G)^2)+tr(laplacian(H)^2)
     return .- tr(Δ(G,H)'*P) .- 2.0 .* (vec(P)' * vec(laplacian(G) * P * laplacian(H))) + constantTerm
    end
 
@@ -382,11 +382,11 @@ module GraphMatchingUtils
    # function Fλ as stated in the paper.
    # algorithm uses only normalized version. This is just for plotting and displaying the correct data.
    function fλ(P, λ, G, H)
-    return (1-λ) * GraphMatchingUtils.f0(P, G, H)  +  λ * GraphMatchingUtils.f1(P, G, H)
+    return (1-λ) * f0(P, G, H)  +  λ * f1(P, G, H)
    end
 
    function fλNormalized(P, λ, G, H)
-    return (1-λ) * GraphMatchingUtils.f0Normalized(P, G, H)  +  λ * GraphMatchingUtils.f1Normalized(P, G, H)
+    return (1-λ) * f0Normalized(P, G, H)  +  λ * f1Normalized(P, G, H)
    end
 
     struct FλForP
@@ -400,7 +400,7 @@ module GraphMatchingUtils
 
     # function flipped for maximization and solving QAP
    function fλ_QAP(P, λ, G, H)
-    return (1-λ) * (-GraphMatchingUtils.f1Normalized(P, G, H))  +  λ * (-GraphMatchingUtils.f0Normalized(P, G, H))
+    return (1-λ) * (-f1Normalized(P, G, H))  +  λ * (-f0Normalized(P, G, H))
    end
 
     struct FλForP_QAP
@@ -415,8 +415,8 @@ module GraphMatchingUtils
    # gradient of F1 as stated in the paper
    # save solution value in variable "storage" for space economy
    function ∇fλ!(storageλ, storage0, storage1, P, λ, G, H)
-    GraphMatchingUtils.∇f0Normalized!(storage0, P, G, H)
-    GraphMatchingUtils.∇f1Normalized!(storage1, P, G, H)
+    ∇f0Normalized!(storage0, P, G, H)
+    ∇f1Normalized!(storage1, P, G, H)
     storageλ .= (1.0-λ) .* storage0 .+ λ .* storage1
    end
    struct ∇FλForP!
@@ -433,8 +433,8 @@ module GraphMatchingUtils
    # gradient flipped for maximization and solving QAP
    # save solution value in variable "storage" for space economy
    function ∇fλ_QAP!(storageλ, storage0, storage1, P, λ, G, H)
-    GraphMatchingUtils.∇f0Normalized!(storage0, P, G, H)
-    GraphMatchingUtils.∇f1Normalized!(storage1, P, G, H)
+    ∇f0Normalized!(storage0, P, G, H)
+    ∇f1Normalized!(storage1, P, G, H)
     storageλ .= (1.0-λ) .* (-storage1) .+ λ .* (-storage0)
    end
 

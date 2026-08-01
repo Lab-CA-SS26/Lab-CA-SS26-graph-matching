@@ -1,5 +1,5 @@
-include("src/GraphMatchingUtils.jl")
-using .GraphMatchingUtils
+include("src/PathGraphMatching.jl")
+using .PathGraphMatching
 using TOML
 using DataFrames, CSV, DelimitedFiles, Dates
 using LinearAlgebra, Permutations
@@ -43,7 +43,7 @@ function main()
         G = readdlm(m2_file)
         H = readdlm(m1_file)
 
-        p_opt, log_string, dataPoints = GraphMatchingUtils.pathAlgorithm(G, H, ϵ_λ_f, ϵ_λ_p; 
+        p_opt, log_string, dataPoints = PathGraphMatching.pathAlgorithm(G, H, ϵ_λ_f, ϵ_λ_p; 
             solveQAP=solveQAP,
             return_log=return_log,
             return_dataPoints=return_dataPoints,
@@ -52,16 +52,16 @@ function main()
         )
         
         println("-"^30)
-        p_opt = GraphMatchingUtils.permVtM(p_opt)
+        p_opt = PathGraphMatching.permVtM(p_opt)
         println("Solving QAP: ", solveQAP)
         println("GM Cost:")
-        println("F0: ", GraphMatchingUtils.f0(p_opt, G, H))
-        println("F1: ", GraphMatchingUtils.f1(p_opt, G, H))
+        println("F0: ", PathGraphMatching.f0(p_opt, G, H))
+        println("F1: ", PathGraphMatching.f1(p_opt, G, H))
         p_opt_qap = readdlm("QapLib/$(qapLib_example)Opt.csv", Int64)
         p_opt_qap = vec(p_opt_qap)
         p_opt_qap = Matrix(Permutation(p_opt_qap))
-        push!(optVals, GraphMatchingUtils.qapVal(p_opt_qap, G, H))
-        push!(algVals, GraphMatchingUtils.qapVal(p_opt, G, H))
+        push!(optVals, PathGraphMatching.qapVal(p_opt_qap, G, H))
+        push!(algVals, PathGraphMatching.qapVal(p_opt, G, H))
         println("MIN       ALG")
         println(last(optVals), "       " , last(algVals))
         timestamp = Dates.format(now(), "yyyy-mm-dd_HH-MM-SS")
@@ -82,7 +82,6 @@ function main()
         for i in 1:length(optVals)
             println(qapLib_example_list[i], "       " ,optVals[i], "       ", algVals[i])
         end
-        return # TODO remove
     end
 end
 
