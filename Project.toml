@@ -1,4 +1,4 @@
-name = "PathGraphMatching"
+name = "pathGraphMatching"
 uuid = "556a0210-cb54-430a-8041-38e6d7206121"
 version = "0.1.0"
 authors = ["Ken Alan Berkpinar <ken.berkpinar@gmail.com>"]
