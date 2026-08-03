@@ -88,9 +88,8 @@ module pathGraphMatching
         λ = 0.0
 
         # redefine f0, f1 and fλ depending on whether the QAP should be solved or not, s.t. f0 is always convex and f1 is always concave.
-        if !solveQAP
-            fλNormalizedFinal = fλNormalized
-        else
+        fλNormalizedFinal = fλNormalized
+        if solveQAP
             fλNormalizedFinal = fλ_QAP
         end
 
