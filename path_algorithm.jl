@@ -31,17 +31,23 @@ function main()
         "Tai35a",
         "Tai40a"
     ]
+
+    ϵ_list=[0.01]
     
     optVals = []
     algVals = []
     for qapLib_example in qapLib_example_list
-        println("="^30)
-        println(qapLib_example)
-        m1_file = "QapLib/$(qapLib_example)1.csv"
-        m2_file = "QapLib/$(qapLib_example)2.csv"
-        # read matrices G and H
-        G = readdlm(m2_file)
-        H = readdlm(m1_file)
+        for ϵ in ϵ_list
+            ϵ_λ_f = ϵ
+            ϵ_λ_p = ϵ
+            println("="^30)
+            println(qapLib_example)
+            println("ϵ_λ_f = $(ϵ_λ_f), ϵ_λ_p = $(ϵ_λ_p)")
+            m1_file = "QapLib/$(qapLib_example)1.csv"
+            m2_file = "QapLib/$(qapLib_example)2.csv"
+            # read matrices G and H
+            G = readdlm(m2_file)
+            H = readdlm(m1_file)
 
         p_opt, log_string, dataPoints = pathGraphMatching.pathAlgorithm(G, H, ϵ_λ_f, ϵ_λ_p; 
             solveQAP=solveQAP,
@@ -68,14 +74,14 @@ function main()
         results_filename = "Results/$(timestamp)_$(qapLib_example)_$(ϵ_λ_f)_$(ϵ_λ_p)_$(solveQAP).txt"
         write(results_filename, log_string)
 
-        # plotAll(dataPoints.λ_list, dataPoints.f0_list, dataPoints.f1_list, dataPoints.fλ_list, "$(qapLib_example) ϵλf=$(ϵ_λ_f) ϵλp=$(ϵ_λ_p) $(solveQAP ? "QAP" : "GM")")
-        dataPoints_filename = "Results/$(timestamp)_$(qapLib_example)_$(ϵ_λ_f)_$(ϵ_λ_p)_$(solveQAP)_dataPoints.txt"
-        if dataPoints !== nothing
-            header = ["lambda" "f0" "f1" "fla"]
-            data = [dataPoints.λ_list dataPoints.f0_list dataPoints.f1_list dataPoints.fλ_list]
-            matrix = [header; data]
-            writedlm(dataPoints_filename, matrix, '\t')
-        end
+            # plotAll(dataPoints.λ_list, dataPoints.f0_list, dataPoints.f1_list, dataPoints.fλ_list, "$(qapLib_example) ϵλf=$(ϵ_λ_f) ϵλp=$(ϵ_λ_p) $(solveQAP ? "QAP" : "GM")")
+            dataPoints_filename = "Results/$(timestamp)_$(qapLib_example)_$(ϵ_λ_f)_$(ϵ_λ_p)_$(solveQAP)_dataPoints.txt"
+            if dataPoints !== nothing
+                header = ["lambda" "f0" "f1" "fla"]
+                data = [dataPoints.λ_list dataPoints.f0_list dataPoints.f1_list dataPoints.fλ_list]
+                matrix = [header; data]
+                writedlm(dataPoints_filename, matrix, '\t')
+            end
 
         println("")
         println("NAME           MIN         ALG")
