@@ -33,6 +33,7 @@ function main()
     ]
 
     ϵ_list=[0.01]
+    timestamp = Dates.format(now(), "yyyy-mm-dd_HH-MM-SS")
     
     optVals = []
     algVals = []
@@ -70,12 +71,11 @@ function main()
             push!(algVals, pathGraphMatching.qapVal(p_opt, G, H))
             println("MIN       ALG")
             println(last(optVals), "       " , last(algVals))
-            timestamp = Dates.format(now(), "yyyy-mm-dd_HH-MM-SS")
-            results_filename = "Results/$(timestamp)_$(qapLib_example)_$(ϵ_λ_f)_$(ϵ_λ_p)_$(solveQAP).txt"
+            results_filename = "Results/$(timestamp)/$(timestamp)_$(qapLib_example)_$(ϵ_λ_f)_$(ϵ_λ_p)_$(solveQAP).txt"
             write(results_filename, log_string)
 
             # plotAll(dataPoints.λ_list, dataPoints.f0_list, dataPoints.f1_list, dataPoints.fλ_list, "$(qapLib_example) ϵλf=$(ϵ_λ_f) ϵλp=$(ϵ_λ_p) $(solveQAP ? "QAP" : "GM")")
-            dataPoints_filename = "Results/$(timestamp)_$(qapLib_example)_$(ϵ_λ_f)_$(ϵ_λ_p)_$(solveQAP)_dataPoints.txt"
+            dataPoints_filename = "Results/$(timestamp)/$(timestamp)_$(qapLib_example)_$(ϵ_λ_f)_$(ϵ_λ_p)_$(solveQAP)_dataPoints.txt"
             if dataPoints !== nothing
                 header = ["lambda" "f0" "f1" "fla"]
                 data = [dataPoints.λ_list dataPoints.f0_list dataPoints.f1_list dataPoints.fλ_list]
