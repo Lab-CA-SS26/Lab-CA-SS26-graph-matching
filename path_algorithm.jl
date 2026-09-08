@@ -15,14 +15,14 @@ function main()
     verbose_FW=false
 
     qapLib_example_list = [
-        #="Chr12c",
+        "Chr12c",
         "Chr15a",
         "Chr15c",
         "Chr20b",
         "Chr22b",
         "Esc16b",
         "Rou12",
-        "Rou15",=#
+        "Rou15",
         "Rou20",
         "Tai15a",
         "Tai17a",

@@ -21,12 +21,11 @@ function main()
         "Tai35a",
         "Tai40a"
     ]
-    ts1 = "2026-07-30_14-23-01"
-    ts2 = "2026-08-04_16-31-52"
     println("="^30)
-    println("Ex   OPT   ϵ=0.1   ϵ=0.01")
+    eps_list=[0.1, 0.01]
+    solveQap=true
 
-    for i in 1:length(qapLib_example_list)
+    #=for i in 1:length(qapLib_example_list)
         opt = "QapLib/$(qapLib_example_list[i])Opt.csv"
         res_1 = "Results/$(ts1)/$(ts1)_$(qapLib_example_list[i])_0.1_0.1_true.txt"
         res_2 = "Results/$(ts2)/$(ts2)_$(qapLib_example_list[i])_0.01_0.01_true.txt"
@@ -38,7 +37,7 @@ function main()
             p_opt_qap = Matrix(Permutation(p_opt_qap))
             println("$(qapLib_example_list[i])   $(pathGraphMatching.qapVal(p_opt_qap, G, H))   $(readlines(res_1)[13])   $(readlines(res_2)[13])")
         end
-    end
+    end=#
 end
 
 main()
