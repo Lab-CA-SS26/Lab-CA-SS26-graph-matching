@@ -362,7 +362,8 @@ module pathGraphMatching
     # save solution value in variable "storage" for space economy
     function ∇f1Normalized!(storage, P, G, H)
         # the PATH-Algorithm paper has 2.0 in front of the second term, but 4.0 should be correct.
-        value = .- Δ(G,H)' .- 4.0 .* laplacian(G) * P * laplacian(H)
+        #TODO correct this!!!
+        value = .- Δ(G,H)' .- 2.0 .* laplacian(G) * P * laplacian(H)
         storage .= value ./ (sqd_frob(G) + sqd_frob(H))
     end
 
