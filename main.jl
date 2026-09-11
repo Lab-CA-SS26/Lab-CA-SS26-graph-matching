@@ -24,7 +24,7 @@ function main()
         "Tai40a"
     ]
     println("="^30)
-    eps_list=[0.5, 0.25, 0.1, 0.01]
+    eps_list=[0.25, 0.1, 0.01]
     solveQAP=true
     return_log=true
     return_dataPoints=true
@@ -33,6 +33,7 @@ function main()
 
     timestamp = Dates.format(now(), "yyyy-mm-dd_HH-MM-SS")
 
+    qapLib_ex_name = []
     optVals = []
     algVals = []
 
@@ -67,6 +68,7 @@ function main()
             p_opt_qap = Matrix(Permutation(p_opt_qap))
             push!(optVals, pathGraphMatching.qapVal(p_opt_qap, G, H))
             push!(algVals, pathGraphMatching.qapVal(p_opt, G, H))
+            push!(qapLib_ex_name, qapLib_example)
             println("MIN       ALG")
             println(last(optVals), "       " , last(algVals))
             results_filename = "$(pathRes)/$(timestamp)_$(qapLib_example)_$(ϵ_λ_f)_$(ϵ_λ_p)_$(solveQAP).txt"
@@ -83,7 +85,7 @@ function main()
             println("")
             println("NAME           MIN         ALG")
             for i in 1:length(optVals)
-                println(qapLib_example_list[i], "       " ,optVals[i], "       ", algVals[i])
+                println(qapLib_ex_name[i], "       " ,optVals[i], "       ", algVals[i])
             end
 
         end
