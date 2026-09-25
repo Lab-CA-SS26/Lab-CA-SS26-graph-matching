@@ -47,6 +47,7 @@ function main()
 
     plot(qapLib_example_list, value_list_1, label="ϵ=0.1", marker=:circle)
     plot!(qapLib_example_list, value_list_2, label="ϵ=0.01", marker=:square)
+    display(current())
 
     println(value_list_1)
     println(value_list_2)
